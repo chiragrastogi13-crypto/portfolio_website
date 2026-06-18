@@ -20,6 +20,7 @@ from pathlib import Path
 from . import models
 from .config import ADMIN_EMAIL, ADMIN_PASSWORD, BASE_HOST, BASE_PORT, FRONTEND_ORIGINS
 from .database import Base, SessionLocal, engine
+from .seed_samples import ensure_samples
 from .routers import admin as admin_router
 from .routers import auth as auth_router
 from .routers import payments as payments_router
@@ -50,6 +51,12 @@ def _ensure_admin():
 
 
 _ensure_admin()
+
+_db = SessionLocal()
+try:
+    ensure_samples(_db)
+finally:
+    _db.close()
 
 app = FastAPI(title="Portfolio Studio API")
 
