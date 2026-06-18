@@ -25,7 +25,7 @@ UPI_NAME = os.getenv("UPI_NAME", "Portfolio Studio")
 
 # --- Admin account (auto-created on startup) --------------------------------
 # Log in with these to open the admin panel and approve/reject payments.
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@portfolio.studio")
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@admin.com")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 # --- Email (SMTP) -----------------------------------------------------------
