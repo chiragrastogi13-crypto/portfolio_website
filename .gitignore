@@ -1,0 +1,20 @@
+# Python
+backend/venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+backend/blogger.db
+blogger.db
+backend/app/uploads/
+.env
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ d.name or username }}{% if d.role %} — {{ d.role }}{% endif %}</title>
+  <meta name="description" content="{{ (d.tagline or '')[:150] }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&family=Montserrat:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/blogger.css">
+</head>
+{% set icons = {'github':'fa-github','linkedin':'fa-linkedin-in','twitter':'fa-twitter','instagram':'fa-instagram','dribbble':'fa-dribbble','youtube':'fa-youtube','facebook':'fa-facebook-f'} %}
+<body class="theme-{{ d.theme or 'aurora' }} layout-{{ d.layout or 'classic' }}">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg pub-nav sticky-top">
+    <div class="container">
+      <a class="nav-brand" href="#top">{{ d.name.split(' ')[0] if d.name else username }}<span>.</span></a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="#services">Services</a></li>
+          <li class="nav-item"><a class="nav-link" href="#work">Work</a></li>
+          <li class="nav-item"><a class="nav-link" href="#resume">Resume</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero" id="top">
+    <div class="container">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-7" data-aos="fade-right">
+          <div class="greeting">{{ d.greeting or "Hello, I'm" }}</div>
+          <h1>{{ d.name }}</h1>
+          <div class="role">{{ d.role }}</div>
+          <p class="tagline">{{ d.tagline }}</p>
+          <div class="hero-cta">
+            <a href="#contact" class="btn btn-light btn-rounded">{{ d.ctaText or "Hire Me" }}</a>
+            {% if d.resumeUrl %}<a href="{{ d.resumeUrl }}" class="btn btn-ghost btn-rounded">{{ d.resumeText or "Download CV" }}</a>{% endif %}
+          </div>
+          <div class="hero-socials mt-4">
+            {% for k, url in (d.socials or {}).items() %}{% if url %}<a href="{{ url }}"><i class="fab {{ icons.get(k, 'fa-link') }}"></i></a>{% endif %}{% endfor %}
+          </div>
+        </div>
+        <div class="col-lg-5" data-aos="fade-left">
+          <div class="hero-photo-wrap"><img src="{{ d.image }}" alt="{{ d.name }}" class="hero-photo"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  {% if d.stats %}
+  <div class="container stats-strip">
+    <div class="row g-4">
+      {% for s in d.stats %}
+      <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+        <div class="stat-card"><div class="num">{{ s.value }}</div><div class="lbl">{{ s.label }}</div></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- About -->
+  <section class="section-pad" id="about">
+    <div class="container">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-5" data-aos="fade-right"><img src="{{ d.image }}" alt="{{ d.name }}" class="about-img"></div>
+        <div class="col-lg-7" data-aos="fade-left">
+          <div class="eyebrow text-primary fw-bold">About Me</div>
+          <h2 class="fw-bold mb-3">{{ d.aboutHeading }}</h2>
+          <p class="text-muted">{{ d.about }}</p>
+          <ul class="about-list">
+            <li><i class="fas fa-envelope"></i> <strong>Email</strong> {{ d.personal.email }}</li>
+            <li><i class="fas fa-phone"></i> <strong>Phone</strong> {{ d.personal.phone }}</li>
+            <li><i class="fas fa-location-dot"></i> <strong>Location</strong> {{ d.personal.location }}</li>
+            <li><i class="fas fa-circle-check"></i> <strong>Status</strong> {{ d.personal.availability }}</li>
+            <li><i class="fas fa-language"></i> <strong>Languages</strong> {{ d.personal.languages }}</li>
+          </ul>
+          <a href="#contact" class="btn btn-primary btn-rounded">Get in touch</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services -->
+  {% if d.services %}
+  <section class="section-pad bg-soft" id="services">
+    <div class="container">
+      <div class="head" data-aos="fade-up"><div class="eyebrow">What I Do</div><h2>{{ d.hServices or "Services" }}</h2><div class="bar"></div></div>
+      <div class="row g-4">
+        {% for s in d.services %}
+        <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 % 3 * 100 }}">
+          <div class="svc-card"><div class="svc-icon"><i class="fas {{ s.icon or 'fa-star' }}"></i></div><h5>{{ s.title }}</h5><p>{{ s.desc }}</p></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Skills -->
+  {% if d.skills %}
+  {% set colors = ['var(--primary-color)','var(--accent-color)','var(--success-color)','var(--warning-color)'] %}
+  <section class="section-pad" id="skills">
+    <div class="container">
+      <div class="head" data-aos="fade-up"><div class="eyebrow">My Expertise</div><h2>{{ d.hSkills or "Skills" }}</h2><div class="bar"></div></div>
+      <div class="row gx-5">
+        {% for s in d.skills %}
+        {% if loop.index0 % 2 == 0 %}<div class="col-lg-6">{% endif %}
+          <div class="progress-container" data-aos="fade-up">
+            <div class="progress-title"><span class="skill-name">{{ s.name }}</span><span class="skill-percent">{{ s.percent }}%</span></div>
+            <div class="progress"><div class="progress-bar" style="width: {{ s.percent }}%; background-color: {{ colors[loop.index0 % 4] }};"></div></div>
+          </div>
+        {% if loop.index % 2 == 0 or loop.last %}</div>{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Projects -->
+  {% if d.projects %}
+  <section class="section-pad bg-soft" id="work">
+    <div class="container">
+      <div class="head" data-aos="fade-up"><div class="eyebrow">Portfolio</div><h2>{{ d.hWork or "Recent Work" }}</h2><div class="bar"></div></div>
+      <div class="row g-4">
+        {% for p in d.projects %}
+        <div class="col-md-6 col-lg-4" data-aos="zoom-in">
+          <div class="project-card">
+            <img src="{{ p.image }}" alt="{{ p.title }}">
+            <div class="project-overlay">
+              <div class="cat">{{ p.category }}</div>
+              <h5>{{ p.title }}</h5>
+              <p class="small mb-1">{{ p.desc }}</p>
+              {% if p.url %}<a class="plink" href="{{ p.url }}">View project <i class="fas fa-arrow-right ms-1"></i></a>{% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Resume -->
+  {% if d.experience or d.education %}
+  <section class="section-pad" id="resume">
+    <div class="container">
+      <div class="head" data-aos="fade-up"><div class="eyebrow">My Resume</div><h2>{{ d.hResume or "Experience & Education" }}</h2><div class="bar"></div></div>
+      <div class="row g-5">
+        <div class="col-lg-6 resume-col" data-aos="fade-right">
+          <h4><i class="fas fa-briefcase text-primary"></i> {{ d.hExperience or "Experience" }}</h4>
+          <div class="timeline">
+            {% for e in d.experience %}
+            <div class="timeline-item"><span class="period">{{ e.period }}</span><h6>{{ e.role }}</h6><div class="org">{{ e.company }}</div><p>{{ e.desc }}</p></div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="col-lg-6 resume-col" data-aos="fade-left">
+          <h4><i class="fas fa-graduation-cap text-primary"></i> {{ d.hEducation or "Education" }}</h4>
+          <div class="timeline">
+            {% for e in d.education %}
+            <div class="timeline-item"><span class="period">{{ e.period }}</span><h6>{{ e.degree }}</h6><div class="org">{{ e.company }}</div><p>{{ e.desc }}</p></div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Achievements -->
+  {% if d.achievements %}
+  <section class="section-pad bg-soft">
+    <div class="container">
+      <div class="head" data-aos="fade-up"><div class="eyebrow">Recognition</div><h2>{{ d.hAchievements or "Achievements & Awards" }}</h2><div class="bar"></div></div>
+      <div class="row g-4">
+        {% for a in d.achievements %}
+        <div class="col-md-4" data-aos="fade-up">
+          <div class="achievement-badge"><div class="achievement-icon"><i class="fas {{ a.icon or 'fa-trophy' }}"></i></div><div><h6 class="mb-0 fw-bold">{{ a.title }}</h6><small class="text-muted">{{ a.subtitle }}</small></div></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Testimonials -->
+  {% if d.testimonials %}
+  <section class="section-pad">
+    <div class="container">
+      <div class="head" data-aos="fade-up"><div class="eyebrow">Testimonials</div><h2>{{ d.hTestimonials or "What Clients Say" }}</h2><div class="bar"></div></div>
+      <div class="row g-4">
+        {% for t in d.testimonials %}
+        <div class="col-md-6 col-lg-4" data-aos="fade-up">
+          <div class="testimonial-card">
+            <div class="quote">&ldquo;</div>
+            <p class="t-text">{{ t.text }}</p>
+            <div class="t-meta">{% if t.avatar %}<img src="{{ t.avatar }}" alt="{{ t.author }}">{% endif %}<div><h6>{{ t.author }}</h6><small>{{ t.role }}</small></div></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Contact -->
+  <section class="section-pad bg-soft" id="contact">
+    <div class="container">
+      <div class="head" data-aos="fade-up"><div class="eyebrow">Get In Touch</div><h2>{{ d.contactHeading or "Contact Me" }}</h2><div class="bar"></div><p>{{ d.contactText }}</p></div>
+      <div class="row g-5">
+        <div class="col-lg-5" data-aos="fade-right">
+          <div class="contact-info-card"><div class="ci-icon"><i class="fas fa-envelope"></i></div><div><h6>Email</h6><span>{{ d.personal.email }}</span></div></div>
+          <div class="contact-info-card"><div class="ci-icon"><i class="fas fa-phone"></i></div><div><h6>Phone</h6><span>{{ d.personal.phone }}</span></div></div>
+          <div class="contact-info-card"><div class="ci-icon"><i class="fas fa-location-dot"></i></div><div><h6>Location</h6><span>{{ d.personal.location }}</span></div></div>
+        </div>
+        <div class="col-lg-7" data-aos="fade-left">
+          <form class="contact-form" onsubmit="event.preventDefault(); this.reset(); alert('Thanks! This is a demo form.');">
+            <div class="row g-3">
+              <div class="col-md-6"><input class="form-control" placeholder="Your Name" required></div>
+              <div class="col-md-6"><input type="email" class="form-control" placeholder="Your Email" required></div>
+              <div class="col-12"><input class="form-control" placeholder="Subject"></div>
+              <div class="col-12"><textarea class="form-control" rows="5" placeholder="Your Message" required></textarea></div>
+              <div class="col-12"><button class="btn btn-primary btn-rounded">Send Message</button></div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <h4>{{ d.name }}</h4>
+      <p class="mb-3">{{ d.role }}</p>
+      <div class="f-socials mb-3">
+        {% for k, url in (d.socials or {}).items() %}{% if url %}<a href="{{ url }}"><i class="fab {{ icons.get(k, 'fa-link') }}"></i></a>{% endif %}{% endfor %}
+      </div>
+      <div class="copyright">© {{ d.name }} · Built with <a href="http://{{ base_host }}:{{ base_port }}" style="color:var(--secondary-color)">Portfolio Studio</a></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({ duration: 800, once: true });
+
+    // Interactive 3D tilt — cards rotate toward the cursor for a real 3D feel.
+    (function () {
+      const cards = document.querySelectorAll('.svc-card, .stat-card, .project-card, .testimonial-card, .achievement-badge');
+      cards.forEach((card) => {
+        card.addEventListener('mousemove', (e) => {
+          const r = card.getBoundingClientRect();
+          const px = (e.clientX - r.left) / r.width - 0.5;
+          const py = (e.clientY - r.top) / r.height - 0.5;
+          card.style.transform =
+            `perspective(900px) translateY(-10px) rotateY(${px * 12}deg) rotateX(${-py * 12}deg) scale(1.03)`;
+        });
+        card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+      });
+    })();
+  </script>
+</body>
+</html>
