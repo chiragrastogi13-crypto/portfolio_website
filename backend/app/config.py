@@ -61,7 +61,7 @@ USE_PATH_URLS = os.getenv("USE_PATH_URLS", "false").lower() == "true"
 # Frontend (Vite dev server) origin, used for CORS.
 FRONTEND_ORIGINS = os.getenv(
     "FRONTEND_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1.nip.io:5173",
+    "http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1.nip.io:5173,https://wlelo.netlify.app",
 ).split(",")
 
 
