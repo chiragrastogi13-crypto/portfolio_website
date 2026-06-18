@@ -51,6 +51,10 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./blogger.db")
 BASE_HOST = os.getenv("BASE_HOST", "127.0.0.1.nip.io")
 BASE_PORT = int(os.getenv("BASE_PORT", "8000"))
 
+# Set USE_PATH_URLS=true on Render (free tier doesn't support wildcard subdomains).
+# Portfolios will be served at /p/<username> instead of <username>.<host>.
+USE_PATH_URLS = os.getenv("USE_PATH_URLS", "false").lower() == "true"
+
 # Frontend (Vite dev server) origin, used for CORS.
 FRONTEND_ORIGINS = os.getenv(
     "FRONTEND_ORIGINS",
@@ -60,4 +64,8 @@ FRONTEND_ORIGINS = os.getenv(
 
 def public_portfolio_url(username: str) -> str:
     """Build the public URL a client receives after generating their portfolio."""
+    if USE_PATH_URLS:
+        scheme = "https" if BASE_PORT == 443 else "http"
+        port_part = "" if BASE_PORT in (80, 443) else f":{BASE_PORT}"
+        return f"{scheme}://{BASE_HOST}{port_part}/p/{username}"
     return f"http://{username}.{BASE_HOST}:{BASE_PORT}"

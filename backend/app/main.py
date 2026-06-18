@@ -166,6 +166,12 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/p/{username}", response_class=HTMLResponse, include_in_schema=False)
+def path_portfolio(username: str, request: Request):
+    """Path-based portfolio route for deployments without wildcard subdomains."""
+    return _render_portfolio(request, username)
+
+
 @app.get("/sample/{slug}", response_class=HTMLResponse, include_in_schema=False)
 def sample_page(slug: str, request: Request):
     """Render a showcase sample in the full portfolio design (live preview)."""

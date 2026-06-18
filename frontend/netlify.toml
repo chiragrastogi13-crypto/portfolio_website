@@ -1,0 +1,10 @@
+[build]
+  base    = "frontend"
+  publish = "dist"
+  command = "npm run build"
+
+# SPA fallback — all routes handled by React Router
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
