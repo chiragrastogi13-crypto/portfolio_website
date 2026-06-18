@@ -42,6 +42,9 @@ ADMIN_NOTIFY_EMAIL = os.getenv("ADMIN_NOTIFY_EMAIL", ADMIN_EMAIL)
 
 # --- Database ---------------------------------------------------------------
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./blogger.db")
+# Render gives postgres:// but SQLAlchemy 2.x requires postgresql://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # --- Hosting / URL scheme ---------------------------------------------------
 # The bare host the app is served from. Public portfolios live on a subdomain:
