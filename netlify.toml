@@ -3,6 +3,19 @@
   publish = "dist"
   command = "npm run build"
 
+# Proxy portfolio and sample pages to FastAPI backend
+[[redirects]]
+  from   = "/p/*"
+  to     = "https://portfolio-website-6dx9.onrender.com/p/:splat"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/sample/*"
+  to     = "https://portfolio-website-6dx9.onrender.com/sample/:splat"
+  status = 200
+  force  = true
+
 # SPA fallback — all routes handled by React Router
 [[redirects]]
   from   = "/*"
