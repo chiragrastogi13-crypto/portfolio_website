@@ -96,7 +96,7 @@ export default function App() {
       </Routes>
       {!immersive && (
         <footer className="text-center text-muted py-4 border-top mt-4">
-          <div className="container">© {new Date().getFullYear()} Portfolio Studio — built with FastAPI + React</div>
+          <div className="container">© {new Date().getFullYear()} Portfolio Studios — built with FastAPI + React</div>
         </footer>
       )}
     </>
