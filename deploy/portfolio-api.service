@@ -1,0 +1,22 @@
+# systemd unit for the FastAPI backend (uvicorn).
+# Place at: /etc/systemd/system/portfolio-api.service
+# Then:  sudo systemctl daemon-reload && sudo systemctl enable --now portfolio-api
+#
+# This keeps the API "always up": systemd restarts it on crash and on reboot.
+
+[Unit]
+Description=Portfolio Studio FastAPI (uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/blogger_website/backend
+# Load production secrets/config (BASE_HOST, SECRET_KEY, ADMIN_*, SMTP_*, ...).
+EnvironmentFile=/home/ubuntu/blogger_website/backend/.env
+ExecStart=/home/ubuntu/blogger_website/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

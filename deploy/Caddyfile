@@ -1,0 +1,47 @@
+# =============================================================================
+# Caddyfile for wlelo.com  (Oracle Cloud VM + Cloudflare DNS)
+# Place at: /etc/caddy/Caddyfile
+#
+# Requires the Cloudflare DNS plugin build of Caddy so it can obtain a
+# WILDCARD cert (*.wlelo.com) via the DNS-01 challenge:
+#   caddy add-package github.com/caddy-dns/cloudflare
+# and CF_API_TOKEN available to the caddy service (see DEPLOY.md).
+# =============================================================================
+
+{
+	# Email used for Let's Encrypt registration / expiry notices.
+	email admin@wlelo.com
+}
+
+# --- Main site: React SPA + API on the same origin (no CORS) -----------------
+wlelo.com, www.wlelo.com {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
+
+	# Everything the FastAPI backend must handle goes to uvicorn on :8000.
+	@backend path /api/* /uploads/* /static/* /p/* /sample/* /docs /openapi.json
+	handle @backend {
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	# Everything else is the built React app (Vite `dist/`). SPA fallback to
+	# index.html so client-side routes (/editor, /admin, ...) work on refresh.
+	handle {
+		root * /var/www/wlelo-frontend
+		try_files {path} /index.html
+		file_server
+	}
+
+	encode gzip zstd
+}
+
+# --- Wildcard: every other subdomain is a published portfolio ----------------
+# alex.wlelo.com -> FastAPI middleware reads Host, renders Alex's portfolio.
+*.wlelo.com {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+	}
+	reverse_proxy 127.0.0.1:8000
+	encode gzip zstd
+}
