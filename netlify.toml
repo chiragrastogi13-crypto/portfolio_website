@@ -3,17 +3,21 @@
   publish = "dist"
   command = "npm run build"
 
-# Proxy portfolio and sample pages to FastAPI backend
+# Portfolio + sample pages are server-rendered by the backend and served from
+# its own domain (api.wlelo.com), so the frontend links straight there. These
+# redirects only keep any older wlelo.com/p/* and /sample/* links working by
+# sending them to the backend (301 so the browser lands on the working domain,
+# where /static and /uploads resolve correctly).
 [[redirects]]
   from   = "/p/*"
-  to     = "https://portfolio-website-6dx9.onrender.com/p/:splat"
-  status = 200
+  to     = "https://api.wlelo.com/p/:splat"
+  status = 301
   force  = true
 
 [[redirects]]
   from   = "/sample/*"
-  to     = "https://portfolio-website-6dx9.onrender.com/sample/:splat"
-  status = 200
+  to     = "https://api.wlelo.com/sample/:splat"
+  status = 301
   force  = true
 
 # SPA fallback — all routes handled by React Router

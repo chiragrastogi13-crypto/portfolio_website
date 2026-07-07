@@ -11,8 +11,10 @@ from pathlib import Path
 
 from PIL import Image, ImageEnhance, ImageOps
 
-UPLOAD_DIR = Path(__file__).parent / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
+from .config import UPLOADS_DIR
+
+UPLOAD_DIR = Path(UPLOADS_DIR)
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_BYTES = 12 * 1024 * 1024  # 12 MB
 MAX_DIM = 1600                 # longest side after resize

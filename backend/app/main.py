@@ -18,7 +18,7 @@ from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
 from . import models
-from .config import ADMIN_EMAIL, ADMIN_PASSWORD, BASE_HOST, BASE_PORT, FRONTEND_ORIGINS
+from .config import ADMIN_EMAIL, ADMIN_PASSWORD, BASE_HOST, BASE_PORT, FRONTEND_ORIGINS, FRONTEND_URL, UPLOADS_DIR
 from .database import Base, SessionLocal, engine
 from .seed_samples import ensure_samples
 from .routers import admin as admin_router
@@ -79,8 +79,8 @@ app.mount(
 )
 
 # Serve user-uploaded (and enhanced) images at /uploads.
-_uploads_dir = Path(__file__).parent / "uploads"
-_uploads_dir.mkdir(exist_ok=True)
+_uploads_dir = Path(UPLOADS_DIR)
+_uploads_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(_uploads_dir)), name="uploads")
 
 
@@ -130,6 +130,7 @@ def _render_portfolio(request: Request, username: str) -> HTMLResponse:
                 "username": p.username,
                 "base_host": BASE_HOST,
                 "base_port": BASE_PORT,
+                "home_url": FRONTEND_URL,
             },
         )
     finally:
@@ -144,7 +145,7 @@ align-items:center;justify-content:center;height:100vh;margin:0;text-align:cente
 a{{color:#818cf8}}</style></head>
 <body><div><h1>No portfolio at "{username}"</h1>
 <p>This portfolio doesn't exist or hasn't been published yet.</p>
-<p><a href="http://{BASE_HOST}:{BASE_PORT}">← Back to Portfolio Studio</a></p>
+<p><a href="{FRONTEND_URL}">← Back to Portfolio Studio</a></p>
 </div></body></html>"""
 
 
@@ -201,6 +202,7 @@ def sample_page(slug: str, request: Request):
                 "username": s.slug,
                 "base_host": BASE_HOST,
                 "base_port": BASE_PORT,
+                "home_url": FRONTEND_URL,
             },
         )
     finally:

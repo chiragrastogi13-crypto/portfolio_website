@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from .. import auth, images, models, schemas
-from ..config import BASE_HOST, BASE_PORT, public_portfolio_url
+from ..config import PUBLIC_BASE_URL, public_portfolio_url
 from ..database import get_db
 
 router = APIRouter(prefix="/api", tags=["portfolio"])
@@ -145,7 +145,7 @@ async def upload_image(
     except Exception:
         raise HTTPException(status_code=400, detail="Could not read that image. Try a JPG or PNG.")
 
-    return {"url": f"http://{BASE_HOST}:{BASE_PORT}/uploads/{name}"}
+    return {"url": f"{PUBLIC_BASE_URL}/uploads/{name}"}
 
 
 # --- Username availability --------------------------------------------------

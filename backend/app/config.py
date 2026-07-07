@@ -40,6 +40,14 @@ SMTP_FROM = os.getenv("SMTP_FROM", "")  # defaults to SMTP_USER
 # Where "new payment" notifications go (your real inbox). Defaults to admin email.
 ADMIN_NOTIFY_EMAIL = os.getenv("ADMIN_NOTIFY_EMAIL", ADMIN_EMAIL)
 
+# --- Uploads ----------------------------------------------------------------
+# Where user-uploaded images are stored. On hosts with an ephemeral filesystem
+# (e.g. Railway), point this at a mounted persistent volume, e.g. /data/uploads,
+# so images survive redeploys.
+UPLOADS_DIR = os.getenv(
+    "UPLOADS_DIR", str(Path(__file__).resolve().parent / "uploads")
+)
+
 # --- Database ---------------------------------------------------------------
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./blogger.db")
 # Render gives postgres:// but SQLAlchemy 2.x requires postgresql://
@@ -63,6 +71,25 @@ FRONTEND_ORIGINS = os.getenv(
     "FRONTEND_ORIGINS",
     "http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1.nip.io:5173,https://wlelo.netlify.app",
 ).split(",")
+
+
+def _public_base_url() -> str:
+    """Absolute base URL of THIS backend, correct in dev and prod.
+
+    Local:  http://127.0.0.1.nip.io:8000
+    Prod:   https://api.wlelo.com   (BASE_PORT=443 -> https, port omitted)
+    """
+    scheme = "https" if BASE_PORT == 443 else "http"
+    port_part = "" if BASE_PORT in (80, 443) else f":{BASE_PORT}"
+    return f"{scheme}://{BASE_HOST}{port_part}"
+
+
+# Absolute backend URL used for building upload/image links.
+PUBLIC_BASE_URL = _public_base_url()
+
+# The marketing/frontend site URL (used in "Built with" links and the 404 page).
+# Falls back to the backend URL when no frontend origin is configured.
+FRONTEND_URL = FRONTEND_ORIGINS[0].strip() if FRONTEND_ORIGINS else PUBLIC_BASE_URL
 
 
 def public_portfolio_url(username: str) -> str:
