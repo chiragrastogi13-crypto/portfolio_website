@@ -1,0 +1,12 @@
+# Keep the image small and free of local/dev artifacts and secrets.
+venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.env
+blogger.db
+app/uploads/
+.python-version
+Dockerfile
+.dockerignore
