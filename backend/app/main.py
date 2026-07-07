@@ -25,6 +25,7 @@ from .routers import admin as admin_router
 from .routers import auth as auth_router
 from .routers import payments as payments_router
 from .routers import portfolios as portfolio_router
+from .routers import requirements as requirements_router
 
 # Create tables on startup (simple for SQLite; use Alembic for real migrations).
 Base.metadata.create_all(bind=engine)
@@ -166,6 +167,7 @@ app.include_router(auth_router.router)
 app.include_router(portfolio_router.router)
 app.include_router(payments_router.router)
 app.include_router(admin_router.router)
+app.include_router(requirements_router.router)
 
 
 @app.get("/api/health")

@@ -124,6 +124,49 @@ class PortfolioOut(BaseModel):
         )
 
 
+# --- Hiring board: requirements + applications ------------------------------
+
+
+class RequirementCreate(BaseModel):
+    title: str = Field(min_length=3, max_length=140)
+    description: str = Field(default="", max_length=5000)
+    skills: str = Field(default="", max_length=300)
+    budget: str = Field(default="", max_length=80)
+    location: str = Field(default="", max_length=120)
+
+
+class RequirementOut(BaseModel):
+    id: int
+    title: str
+    description: str
+    skills: List[str] = []
+    budget: str = ""
+    location: str = ""
+    status: str = "open"
+    poster_email: str
+    is_mine: bool = False
+    has_applied: bool = False
+    application_count: int = 0
+    created_at: datetime
+
+
+class ApplicationCreate(BaseModel):
+    message: str = Field(default="", max_length=3000)
+    proposed_budget: str = Field(default="", max_length=80)
+
+
+class ApplicationOut(BaseModel):
+    id: int
+    requirement_id: int
+    requirement_title: str = ""
+    applicant_email: str
+    message: str = ""
+    portfolio_url: str = ""
+    proposed_budget: str = ""
+    status: str = "pending"
+    created_at: datetime
+
+
 # --- Showcase samples -------------------------------------------------------
 
 

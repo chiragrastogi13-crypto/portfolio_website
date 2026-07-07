@@ -80,4 +80,16 @@ export const api = {
   adminPayments: () => request("/api/admin/payments"),
   approvePayment: (id) => request(`/api/admin/payments/${id}/approve`, { method: "POST" }),
   rejectPayment: (id, reason) => request(`/api/admin/payments/${id}/reject`, { method: "POST", body: { reason } }),
+  // hiring board — requirements + applications
+  requirements: () => request("/api/requirements", { auth: false }),
+  myRequirements: () => request("/api/requirements?mine=true"),
+  requirement: (id) => request(`/api/requirements/${id}`, { auth: false }),
+  createRequirement: (body) => request("/api/requirements", { method: "POST", body }),
+  closeRequirement: (id) => request(`/api/requirements/${id}/close`, { method: "POST" }),
+  deleteRequirement: (id) => request(`/api/requirements/${id}`, { method: "DELETE" }),
+  applyToRequirement: (id, body) => request(`/api/requirements/${id}/apply`, { method: "POST", body }),
+  requirementApplications: (id) => request(`/api/requirements/${id}/applications`),
+  myApplications: () => request("/api/requirements/my/applications"),
+  acceptApplication: (id) => request(`/api/requirements/applications/${id}/accept`, { method: "POST" }),
+  rejectApplication: (id) => request(`/api/requirements/applications/${id}/reject`, { method: "POST" }),
 };

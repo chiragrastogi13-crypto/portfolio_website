@@ -62,6 +62,25 @@ def get_current_user(
     return user
 
 
+def get_current_user_optional(
+    token: Optional[str] = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> Optional[models.User]:
+    """Like get_current_user, but returns None instead of raising when there's
+    no (or an invalid) token. Used by endpoints that are public but tailor their
+    response when a user happens to be logged in."""
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id is None:
+            return None
+    except JWTError:
+        return None
+    return db.query(models.User).filter(models.User.id == int(user_id)).first()
+
+
 def get_current_admin(current: models.User = Depends(get_current_user)) -> models.User:
     """Like get_current_user, but requires the account to be an admin."""
     if not current.is_admin:

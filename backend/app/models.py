@@ -70,6 +70,47 @@ class Payment(Base):
     user = relationship("User")
 
 
+class Requirement(Base):
+    """A hiring/gig requirement posted by a user; others apply to it."""
+
+    __tablename__ = "requirements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    poster_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    title = Column(String, nullable=False)
+    description = Column(Text, default="")
+    skills = Column(String, default="")          # comma-separated tags
+    budget = Column(String, default="")          # free-form, e.g. "₹20,000" or "$500/hr"
+    location = Column(String, default="")        # e.g. "Remote", "Bangalore"
+    status = Column(String, default="open")      # open | closed
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    poster = relationship("User")
+    applications = relationship(
+        "Application", back_populates="requirement", cascade="all, delete-orphan"
+    )
+
+
+class Application(Base):
+    """A user's application ("approach") to a posted requirement."""
+
+    __tablename__ = "applications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    requirement_id = Column(Integer, ForeignKey("requirements.id"), nullable=False)
+    applicant_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    message = Column(Text, default="")
+    portfolio_url = Column(String, default="")   # snapshot of applicant's live portfolio
+    proposed_budget = Column(String, default="")
+    status = Column(String, default="pending")   # pending | accepted | rejected
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    requirement = relationship("Requirement", back_populates="applications")
+    applicant = relationship("User")
+
+
 class SamplePortfolio(Base):
     """Curated showcase samples for the public Samples page (seeded)."""
 

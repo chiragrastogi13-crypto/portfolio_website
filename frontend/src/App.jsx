@@ -9,6 +9,8 @@ import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Result from "./pages/Result.jsx";
 import Admin from "./pages/Admin.jsx";
+import Hire from "./pages/Hire.jsx";
+import HireDetail from "./pages/HireDetail.jsx";
 
 function Nav() {
   const { user, logout } = useAuth();
@@ -35,6 +37,7 @@ function Nav() {
           <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-1">
             <li className="nav-item"><NavLink to="/" end className="nav-link">Home</NavLink></li>
             <li className="nav-item"><NavLink to="/samples" className="nav-link">Portfolio Samples</NavLink></li>
+            <li className="nav-item"><NavLink to="/hire" className="nav-link">Hiring Board</NavLink></li>
             {user ? (
               <>
                 {user.is_admin ? (
@@ -86,6 +89,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/samples" element={<Samples />} />
+        <Route path="/hire" element={<Hire />} />
+        <Route path="/hire/:id" element={<HireDetail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/subscribe" element={<RequireAuth><Subscribe /></RequireAuth>} />
