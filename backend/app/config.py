@@ -49,8 +49,11 @@ UPLOADS_DIR = os.getenv(
 )
 
 # --- Database ---------------------------------------------------------------
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./blogger.db")
-# Render gives postgres:// but SQLAlchemy 2.x requires postgresql://
+# Use `or` (not getenv's default) so an env var that's set-but-empty — e.g. an
+# unresolved ${{...}} reference on Railway — still falls back instead of handing
+# SQLAlchemy an empty string and crashing at startup.
+DATABASE_URL = os.getenv("DATABASE_URL") or "sqlite:///./blogger.db"
+# Managed Postgres often gives postgres:// but SQLAlchemy 2.x requires postgresql://
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
