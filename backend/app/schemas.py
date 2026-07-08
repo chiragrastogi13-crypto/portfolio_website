@@ -8,6 +8,16 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 USERNAME_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])$")
 
+# Names that would collide with frontend routes or backend paths when portfolios
+# live at the site root (wlelo.com/<username>). Users can't take these.
+RESERVED_USERNAMES = {
+    # frontend routes
+    "samples", "hire", "login", "register", "subscribe", "editor", "result", "admin",
+    # backend paths / assets
+    "p", "api", "docs", "static", "uploads", "sample", "health", "assets",
+    "www", "favicon", "robots", "sitemap",
+}
+
 
 def clean_username(v: str) -> str:
     v = (v or "").strip().lower()
@@ -16,6 +26,8 @@ def clean_username(v: str) -> str:
             "Username must be 3-32 chars, lowercase letters/numbers/hyphens, "
             "and cannot start or end with a hyphen."
         )
+    if v in RESERVED_USERNAMES:
+        raise ValueError("That name is reserved. Please pick another username.")
     return v
 
 

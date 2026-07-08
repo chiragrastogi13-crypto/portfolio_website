@@ -7,42 +7,98 @@
 # Not a secret — it's a public URL — so it's fine to commit here.
 [build.environment]
   VITE_API_BASE = "https://portfolio-studio-api-production-fdf4.up.railway.app"
-  # Public site origin — makes the editor show wlelo.com/p/<user> as the URL.
+  # Public site origin — makes the editor show wlelo.com/<user> as the URL.
   VITE_PUBLIC_SITE = "https://wlelo.com"
 
-# --- Serve backend-rendered portfolio pages under wlelo.com ------------------
-# These are 200 rewrites (proxies), not 301 redirects, so the browser URL stays
-# https://wlelo.com/p/<user> while the HTML comes from the Railway backend.
-# We must also proxy the assets those pages reference (/static css, /uploads
-# images) or they'd 404 against the SPA. The frontend uses /assets (Vite), so
-# /static and /uploads never clash with it. Specific rules come BEFORE the SPA
-# catch-all — Netlify uses the first matching rule.
+# ============================================================================
+# Routing — portfolios live at the site root: https://wlelo.com/<username>
+#
+# Order matters: Netlify uses the FIRST matching rule. So we (1) proxy the
+# backend asset paths, (2) send the known React routes to the SPA, then
+# (3) treat any other single-segment path as a username and proxy it to the
+# backend's /p/<username> renderer, and finally (4) SPA-fallback everything else.
+# Real files in dist/ (assets, favicon) are served before non-forced rules.
+# ============================================================================
+
+# 1. Backend-served assets the rendered portfolio pages reference, plus legacy
+#    /p/* links and the samples pages. (200 = proxy, URL stays on wlelo.com.)
 [[redirects]]
-  from   = "/p/*"
-  to     = "https://portfolio-studio-api-production-fdf4.up.railway.app/p/:splat"
+  from = "/static/*"
+  to = "https://portfolio-studio-api-production-fdf4.up.railway.app/static/:splat"
   status = 200
-  force  = true
+  force = true
 
 [[redirects]]
-  from   = "/sample/*"
-  to     = "https://portfolio-studio-api-production-fdf4.up.railway.app/sample/:splat"
+  from = "/uploads/*"
+  to = "https://portfolio-studio-api-production-fdf4.up.railway.app/uploads/:splat"
   status = 200
-  force  = true
+  force = true
 
 [[redirects]]
-  from   = "/static/*"
-  to     = "https://portfolio-studio-api-production-fdf4.up.railway.app/static/:splat"
+  from = "/sample/*"
+  to = "https://portfolio-studio-api-production-fdf4.up.railway.app/sample/:splat"
   status = 200
-  force  = true
+  force = true
 
 [[redirects]]
-  from   = "/uploads/*"
-  to     = "https://portfolio-studio-api-production-fdf4.up.railway.app/uploads/:splat"
+  from = "/p/*"
+  to = "https://portfolio-studio-api-production-fdf4.up.railway.app/p/:splat"
   status = 200
-  force  = true
+  force = true
 
-# SPA fallback — all other routes handled by React Router
+# 2. Known React Router routes -> serve the SPA (index.html).
+#    NOTE: if you add a new frontend route, add it here too, and add its name to
+#    RESERVED_USERNAMES in backend/app/schemas.py.
 [[redirects]]
-  from   = "/*"
-  to     = "/index.html"
+  from = "/"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/samples"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/hire"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/hire/*"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/login"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/register"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/subscribe"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/editor"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/result"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/admin"
+  to = "/index.html"
+  status = 200
+
+# 3. Any other single-segment path is a portfolio username -> backend renderer.
+#    (No force, so real static files like /favicon.ico are served first.)
+[[redirects]]
+  from = "/:username"
+  to = "https://portfolio-studio-api-production-fdf4.up.railway.app/p/:username"
+  status = 200
+
+# 4. SPA fallback for anything deeper (client-side routing / 404 page).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200

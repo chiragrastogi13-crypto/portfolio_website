@@ -124,13 +124,13 @@ export default function Editor() {
             {isNew ? (
               <div style={{ minWidth: 0, flex: "1 1 auto" }}>
                 <div className="input-group input-group-sm" style={{ maxWidth: 380, width: "100%" }}>
-                  {pathMode && <span className="input-group-text">{siteHost}/p/</span>}
+                  {pathMode && <span className="input-group-text">{siteHost}/</span>}
                   <input className="form-control" placeholder="your-name" value={username} onChange={(e) => onUsername(e.target.value)} />
                   {!pathMode && <span className="input-group-text">.{host}</span>}
                 </div>
                 {uname && <small className={uname.available ? "text-success" : "text-danger"}>{uname.available ? "✓ Available" : `✗ ${uname.reason || "Taken"}`}</small>}
               </div>
-            ) : <strong className="small">{pathMode ? `${siteHost}/p/${username}` : `${username}.${host}`}</strong>}
+            ) : <strong className="small">{pathMode ? `${siteHost}/${username}` : `${username}.${host}`}</strong>}
           </div>
           <div className="d-flex align-items-center gap-1" title="Layout (structure)">
             <i className="fas fa-table-cells-large text-muted"></i>

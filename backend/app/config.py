@@ -100,5 +100,7 @@ def public_portfolio_url(username: str) -> str:
     if USE_PATH_URLS:
         scheme = "https" if BASE_PORT == 443 else "http"
         port_part = "" if BASE_PORT in (80, 443) else f":{BASE_PORT}"
-        return f"{scheme}://{BASE_HOST}{port_part}/p/{username}"
+        # Root-level path (wlelo.com/<user>); Netlify rewrites it to the
+        # backend's /p/<user> route. Cleaner than exposing /p/ in the link.
+        return f"{scheme}://{BASE_HOST}{port_part}/{username}"
     return f"http://{username}.{BASE_HOST}:{BASE_PORT}"
