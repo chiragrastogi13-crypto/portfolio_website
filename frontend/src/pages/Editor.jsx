@@ -101,7 +101,14 @@ export default function Editor() {
     catch (e) { setError(e.message); } finally { setBusy(false); }
   };
 
+  // Public URL preview. In production the site is path-based, so set
+  // VITE_PUBLIC_SITE (e.g. https://wlelo.com) and we show wlelo.com/p/<user>.
+  // Locally, with no VITE_PUBLIC_SITE, we fall back to the subdomain form
+  // derived from the API base (nip.io wildcard) -> <user>.127.0.0.1.nip.io:8000.
   const host = (() => { try { return new URL(api.base).host; } catch { return "127.0.0.1.nip.io:8000"; } })();
+  const pubSite = import.meta.env.VITE_PUBLIC_SITE;
+  const pathMode = !!pubSite;
+  const siteHost = pubSite ? (() => { try { return new URL(pubSite).host; } catch { return pubSite; } })() : host;
   if (loading) return <div className="text-center py-5">Loading editor…</div>;
 
   const colorAt = (i) => SKILL_COLORS[i % 4];
@@ -116,13 +123,14 @@ export default function Editor() {
             <span className="text-muted small">URL:</span>
             {isNew ? (
               <div style={{ minWidth: 0, flex: "1 1 auto" }}>
-                <div className="input-group input-group-sm" style={{ maxWidth: 340, width: "100%" }}>
+                <div className="input-group input-group-sm" style={{ maxWidth: 380, width: "100%" }}>
+                  {pathMode && <span className="input-group-text">{siteHost}/p/</span>}
                   <input className="form-control" placeholder="your-name" value={username} onChange={(e) => onUsername(e.target.value)} />
-                  <span className="input-group-text">.{host}</span>
+                  {!pathMode && <span className="input-group-text">.{host}</span>}
                 </div>
                 {uname && <small className={uname.available ? "text-success" : "text-danger"}>{uname.available ? "✓ Available" : `✗ ${uname.reason || "Taken"}`}</small>}
               </div>
-            ) : <strong className="small">{username}.{host}</strong>}
+            ) : <strong className="small">{pathMode ? `${siteHost}/p/${username}` : `${username}.${host}`}</strong>}
           </div>
           <div className="d-flex align-items-center gap-1" title="Layout (structure)">
             <i className="fas fa-table-cells-large text-muted"></i>

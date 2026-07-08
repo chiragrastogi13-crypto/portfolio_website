@@ -7,6 +7,8 @@
 # Not a secret — it's a public URL — so it's fine to commit here.
 [build.environment]
   VITE_API_BASE = "https://portfolio-studio-api-production-fdf4.up.railway.app"
+  # Public site origin — makes the editor show wlelo.com/p/<user> as the URL.
+  VITE_PUBLIC_SITE = "https://wlelo.com"
 
 # --- Serve backend-rendered portfolio pages under wlelo.com ------------------
 # These are 200 rewrites (proxies), not 301 redirects, so the browser URL stays
