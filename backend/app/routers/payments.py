@@ -38,7 +38,7 @@ def payment_info():
 @router.get("/qr")
 def payment_qr(
     amount: float = Query(0, ge=0),
-    note: str = Query("Portfolio Studio subscription"),
+    note: str = Query("Website Lelo subscription"),
 ):
     """Return a PNG QR code that any UPI app can scan to pay."""
     img = qrcode.make(_upi_uri(amount, note))
@@ -74,7 +74,7 @@ def claim_payment(
     background_tasks.add_task(
         send_email,
         ADMIN_NOTIFY_EMAIL,
-        "New payment to verify - Portfolio Studio",
+        "New payment to verify - Website Lelo",
         f"A user has submitted a payment for review.\n\n"
         f"User: {current.email}\n"
         f"Plan: {payload.plan}\n"

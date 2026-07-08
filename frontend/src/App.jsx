@@ -28,7 +28,7 @@ function Nav() {
     <nav className={`navbar navbar-expand-lg navbar-light pub-nav sticky-top ${scrolled ? "pub-nav-scrolled" : ""}`}>
       <div className="container">
         <Link to="/" className="navbar-brand d-flex align-items-center gap-2">
-          <span className="nav-logo">✨</span>Portfolio<span>Studio</span>
+          <span className="nav-logo">✨</span>Website<span>Lelo</span>
         </Link>
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon"></span>
@@ -101,7 +101,7 @@ export default function App() {
       </Routes>
       {!immersive && (
         <footer className="text-center text-muted py-4 border-top mt-4">
-          <div className="container">© {new Date().getFullYear()} Portfolio Studios — built with FastAPI + React</div>
+          <div className="container">© {new Date().getFullYear()} Website Lelo — built with FastAPI + React</div>
         </footer>
       )}
     </>

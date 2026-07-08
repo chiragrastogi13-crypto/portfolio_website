@@ -1,4 +1,4 @@
-# Portfolio Studio
+# Website Lelo
 
 A full-stack app where a company showcases its work and lets clients build and
 publish their own professional portfolio. Each published portfolio gets its own
@@ -154,7 +154,7 @@ All overridable via environment variables (see `backend/app/config.py`):
 |----------------------|------------------------|---------------------------------|
 | `SECRET_KEY`         | dev placeholder        | **Change in production.**        |
 | `UPI_VPA`            | `7071946603@ybl`       | **Your UPI ID** (so payments reach you). |
-| `UPI_NAME`           | `Portfolio Studio`     | Payee name shown in UPI apps.    |
+| `UPI_NAME`           | `Website Lelo`         | Payee name shown in UPI apps.    |
 | `ADMIN_EMAIL`        | `admin@portfolio.studio` | Admin-panel login.             |
 | `ADMIN_PASSWORD`     | `admin123`             | Admin-panel password.            |
 | `ADMIN_NOTIFY_EMAIL` | = `ADMIN_EMAIL`        | Inbox that gets "new payment" emails. |

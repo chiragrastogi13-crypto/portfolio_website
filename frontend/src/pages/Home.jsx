@@ -69,7 +69,7 @@ export default function Home() {
                 <span className="gradient-text">without the busywork.</span>
               </h1>
               <p className="lead text-muted mt-3" style={{ maxWidth: 520 }}>
-                Portfolio Studios designs clean, fast personal sites. Browse our work, then build your
+                Website Lelo designs clean, fast personal sites. Browse our work, then build your
                 own — everything starts pre-filled with sample content, so you just click and edit.
               </p>
               <div className="d-flex gap-3 flex-wrap mt-4">

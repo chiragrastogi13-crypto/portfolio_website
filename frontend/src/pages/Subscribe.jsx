@@ -84,12 +84,12 @@ export default function Subscribe() {
     if (!upi || !plan) return "#";
     const q = new URLSearchParams({
       pa: upi.vpa, pn: upi.name, am: String(plan.price), cu: "INR",
-      tn: `Portfolio Studios - ${plan.name}`,
+      tn: `Website Lelo - ${plan.name}`,
     });
     return `upi://pay?${q.toString()}`;
   };
 
-  const qrSrc = plan ? `${api.base}/api/payment/qr?amount=${plan.price}&note=${encodeURIComponent("Portfolio Studios - " + plan.name)}` : "";
+  const qrSrc = plan ? `${api.base}/api/payment/qr?amount=${plan.price}&note=${encodeURIComponent("Website Lelo - " + plan.name)}` : "";
 
   const copyVpa = async () => {
     try { await navigator.clipboard.writeText(upi.vpa); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch (_) {}

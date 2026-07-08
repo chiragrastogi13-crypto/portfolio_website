@@ -59,7 +59,7 @@ try:
 finally:
     _db.close()
 
-app = FastAPI(title="Portfolio Studio API")
+app = FastAPI(title="Website Lelo API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -145,7 +145,7 @@ align-items:center;justify-content:center;height:100vh;margin:0;text-align:cente
 a{{color:#818cf8}}</style></head>
 <body><div><h1>No portfolio at "{username}"</h1>
 <p>This portfolio doesn't exist or hasn't been published yet.</p>
-<p><a href="{FRONTEND_URL}">← Back to Portfolio Studio</a></p>
+<p><a href="{FRONTEND_URL}">← Back to Website Lelo</a></p>
 </div></body></html>"""
 
 
@@ -214,7 +214,7 @@ def root():
     """Base-host landing hint (the real UI is the React app on :5173)."""
     return JSONResponse(
         {
-            "name": "Portfolio Studio API",
+            "name": "Website Lelo API",
             "docs": "/docs",
             "frontend": "Run the React app (npm run dev) on port 5173.",
         }

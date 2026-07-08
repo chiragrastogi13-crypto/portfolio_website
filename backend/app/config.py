@@ -21,7 +21,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1008
 # Set these to YOUR real UPI ID so payments reach you. The QR code and the
 # "Open in UPI app" button are built from these.
 UPI_VPA = os.getenv("UPI_VPA", "7071946603@ybl")
-UPI_NAME = os.getenv("UPI_NAME", "Portfolio Studio")
+UPI_NAME = os.getenv("UPI_NAME", "Website Lelo")
 
 # --- Admin account (auto-created on startup) --------------------------------
 # Log in with these to open the admin panel and approve/reject payments.

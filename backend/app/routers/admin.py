@@ -53,7 +53,7 @@ def approve_payment(
             "Payment approved - you can now build your portfolio!",
             "Great news! Your payment has been verified and approved.\n\n"
             "You can now create your portfolio — just log in and open the editor "
-            "to start customizing your website.\n\n— Portfolio Studio",
+            "to start customizing your website.\n\n— Website Lelo",
         )
     db.commit()
     db.refresh(payment)
@@ -77,12 +77,12 @@ def reject_payment(
         background_tasks.add_task(
             send_email,
             payment.user.email,
-            "Payment could not be verified - Portfolio Studio",
+            "Payment could not be verified - Website Lelo",
             "Unfortunately we couldn't verify your payment, so your account "
             "hasn't been unlocked.\n\n"
             f"Reason: {payload.reason.strip() or 'Not specified'}\n\n"
             "Please double-check the payment and submit again, or reply to this "
-            "email if you need help.\n\n— Portfolio Studio",
+            "email if you need help.\n\n— Website Lelo",
         )
     db.commit()
     db.refresh(payment)

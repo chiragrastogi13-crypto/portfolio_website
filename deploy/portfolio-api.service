@@ -5,7 +5,7 @@
 # This keeps the API "always up": systemd restarts it on crash and on reboot.
 
 [Unit]
-Description=Portfolio Studio FastAPI (uvicorn)
+Description=Website Lelo FastAPI (uvicorn)
 After=network.target
 
 [Service]
