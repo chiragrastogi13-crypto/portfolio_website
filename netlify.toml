@@ -3,20 +3,25 @@
   publish = "dist"
   command = "npm run build"
 
+# API base the React app is built against (Railway-hosted FastAPI).
+# Not a secret — it's a public URL — so it's fine to commit here.
+[build.environment]
+  VITE_API_BASE = "https://portfolio-studio-api-production-fdf4.up.railway.app"
+
 # Portfolio + sample pages are server-rendered by the backend and served from
-# its own domain (api.wlelo.com), so the frontend links straight there. These
-# redirects only keep any older wlelo.com/p/* and /sample/* links working by
-# sending them to the backend (301 so the browser lands on the working domain,
-# where /static and /uploads resolve correctly).
+# the Railway domain, so the frontend links straight there. These redirects
+# only keep any older wlelo.com/p/* and /sample/* links working by sending them
+# to the backend (301 so the browser lands on the working domain, where /static
+# and /uploads resolve correctly).
 [[redirects]]
   from   = "/p/*"
-  to     = "https://api.wlelo.com/p/:splat"
+  to     = "https://portfolio-studio-api-production-fdf4.up.railway.app/p/:splat"
   status = 301
   force  = true
 
 [[redirects]]
   from   = "/sample/*"
-  to     = "https://api.wlelo.com/sample/:splat"
+  to     = "https://portfolio-studio-api-production-fdf4.up.railway.app/sample/:splat"
   status = 301
   force  = true
 
