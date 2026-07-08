@@ -31,9 +31,11 @@ export default function Result() {
             <a className="btn btn-primary btn-lg" href={url} target="_blank" rel="noopener noreferrer">Open my portfolio →</a>
             <Link className="btn btn-outline-primary btn-lg" to="/editor">Keep editing</Link>
           </div>
-          <p className="text-muted small mt-4 mb-0">
-            This link works because <code>*.127.0.0.1.nip.io</code> resolves to your local machine.
-          </p>
+          {url.includes("nip.io") && (
+            <p className="text-muted small mt-4 mb-0">
+              This link works because <code>*.127.0.0.1.nip.io</code> resolves to your local machine.
+            </p>
+          )}
         </div>
       </div>
     </div>
