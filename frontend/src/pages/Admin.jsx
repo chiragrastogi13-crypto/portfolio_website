@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "../api";
 
 const BADGE = {
@@ -8,24 +8,77 @@ const BADGE = {
   disapproved: "text-bg-danger",
 };
 
+// --- Stats summary ----------------------------------------------------------
+function StatsBar({ refreshKey }) {
+  const [s, setS] = useState(null);
+  useEffect(() => { api.adminStats().then(setS).catch(() => {}); }, [refreshKey]);
+
+  const tiles = [
+    { label: "Users", value: s?.users, icon: "fa-users", color: "#6c5ce7" },
+    { label: "Published portfolios", value: s?.published, icon: "fa-globe", color: "#00b894" },
+    { label: "Subscribers", value: s?.subscribers, icon: "fa-star", color: "#fdcb6e" },
+    { label: "Pending payments", value: s?.pending_payments, icon: "fa-clock", color: "#e17055" },
+  ];
+  return (
+    <div className="row g-3 mb-4">
+      {tiles.map((t) => (
+        <div className="col-6 col-lg-3" key={t.label}>
+          <div className="card border-0 shadow-sm h-100">
+            <div className="card-body d-flex align-items-center gap-3">
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: t.color + "22", color: t.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+                <i className={`fas ${t.icon}`}></i>
+              </div>
+              <div>
+                <div className="h4 mb-0 fw-bold">{t.value ?? "…"}</div>
+                <div className="text-muted small">{t.label}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // --- Users tab --------------------------------------------------------------
-function UsersTab() {
+function UsersTab({ onChange }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [busyId, setBusyId] = useState(null);
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
     api.adminUsers().then(setUsers).catch((e) => setError(e.message)).finally(() => setLoading(false));
+  }, []);
+  useEffect(load, [load]);
+
+  const patch = (updated) => setUsers((list) => list.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
+
+  const toggleBlock = async (u) => {
+    const blocking = u.status !== "disapproved";
+    if (blocking && !window.confirm(`Block ${u.email}? They won't be able to log in or use the site.`)) return;
+    setBusyId(u.id); setError("");
+    try {
+      const updated = blocking ? await api.blockUser(u.id) : await api.unblockUser(u.id);
+      patch(updated); onChange?.();
+    } catch (e) { setError(e.message); } finally { setBusyId(null); }
   };
-  useEffect(load, []);
+
+  const delPortfolio = async (u) => {
+    if (!window.confirm(`Delete ${u.email}'s portfolio "${u.portfolio_username}"? Their public page will stop working. This cannot be undone.`)) return;
+    setBusyId(u.id); setError("");
+    try {
+      await api.deleteUserPortfolio(u.id);
+      patch({ id: u.id, has_portfolio: false, portfolio_username: "", portfolio_url: "" });
+      onChange?.();
+    } catch (e) { setError(e.message); } finally { setBusyId(null); }
+  };
 
   return (
     <div className="card border-0 shadow-sm">
       <div className="card-body d-flex justify-content-between align-items-center">
-        <div>
-          <strong>{users.length}</strong> registered user{users.length === 1 ? "" : "s"}
-        </div>
+        <div><strong>{users.length}</strong> registered user{users.length === 1 ? "" : "s"}</div>
         <button className="btn btn-outline-primary btn-sm" onClick={load}><i className="fas fa-rotate me-1"></i>Refresh</button>
       </div>
       {error && <div className="alert alert-danger m-3">{error}</div>}
@@ -36,28 +89,45 @@ function UsersTab() {
           <table className="table table-hover align-middle mb-0">
             <thead className="table-light">
               <tr>
-                <th>#</th><th>Email</th><th>Role</th><th>Status</th><th>Subscribed</th><th>Portfolio</th><th>Joined</th>
+                <th>#</th><th>Email</th><th>Role</th><th>Status</th><th>Sub</th><th>Portfolio</th><th>Joined</th><th className="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {users.length === 0 && <tr><td colSpan="7" className="text-center text-muted py-4">No users yet.</td></tr>}
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td className="text-muted">{u.id}</td>
-                  <td className="fw-semibold">{u.email}</td>
-                  <td>{u.is_admin ? <span className="badge text-bg-dark">Admin</span> : <span className="badge text-bg-light">User</span>}</td>
-                  <td><span className={`badge ${BADGE[u.status] || "text-bg-secondary"}`}>{u.status}</span></td>
-                  <td>{u.is_subscribed ? <span className="text-success"><i className="fas fa-check"></i></span> : <span className="text-muted">—</span>}</td>
-                  <td>
-                    {u.has_portfolio ? (
-                      u.portfolio_url
-                        ? <a href={u.portfolio_url} target="_blank" rel="noopener noreferrer">{u.portfolio_username} <i className="fas fa-arrow-up-right-from-square ms-1 small"></i></a>
-                        : <span title="Not published yet">{u.portfolio_username} <span className="text-muted small">(draft)</span></span>
-                    ) : <span className="text-muted">—</span>}
-                  </td>
-                  <td className="text-muted small">{new Date(u.created_at).toLocaleDateString()}</td>
-                </tr>
-              ))}
+              {users.length === 0 && <tr><td colSpan="8" className="text-center text-muted py-4">No users yet.</td></tr>}
+              {users.map((u) => {
+                const blocked = u.status === "disapproved";
+                return (
+                  <tr key={u.id} className={blocked ? "table-danger" : ""}>
+                    <td className="text-muted">{u.id}</td>
+                    <td className="fw-semibold">{u.email}</td>
+                    <td>{u.is_admin ? <span className="badge text-bg-dark">Admin</span> : <span className="badge text-bg-light">User</span>}</td>
+                    <td><span className={`badge ${BADGE[u.status] || "text-bg-secondary"}`}>{blocked ? "blocked" : u.status}</span></td>
+                    <td>{u.is_subscribed ? <span className="text-success"><i className="fas fa-check"></i></span> : <span className="text-muted">—</span>}</td>
+                    <td>
+                      {u.has_portfolio ? (
+                        u.portfolio_url
+                          ? <a href={u.portfolio_url} target="_blank" rel="noopener noreferrer">{u.portfolio_username} <i className="fas fa-arrow-up-right-from-square ms-1 small"></i></a>
+                          : <span title="Not published yet">{u.portfolio_username} <span className="text-muted small">(draft)</span></span>
+                      ) : <span className="text-muted">—</span>}
+                    </td>
+                    <td className="text-muted small">{new Date(u.created_at).toLocaleDateString()}</td>
+                    <td className="text-end">
+                      <div className="btn-group btn-group-sm">
+                        {u.has_portfolio && (
+                          <button className="btn btn-outline-danger" disabled={busyId === u.id} title="Delete portfolio" onClick={() => delPortfolio(u)}>
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        )}
+                        {!u.is_admin && (
+                          blocked
+                            ? <button className="btn btn-outline-success" disabled={busyId === u.id} onClick={() => toggleBlock(u)}>Unblock</button>
+                            : <button className="btn btn-outline-danger" disabled={busyId === u.id} onClick={() => toggleBlock(u)}>Block</button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -67,7 +137,7 @@ function UsersTab() {
 }
 
 // --- Payments tab -----------------------------------------------------------
-function PaymentsTab() {
+function PaymentsTab({ onChange }) {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -85,6 +155,7 @@ function PaymentsTab() {
     try {
       const updated = await fn(id);
       setPayments((list) => list.map((p) => (p.id === id ? { ...p, ...updated } : p)));
+      onChange?.();
     } catch (e) { setError(e.message); } finally { setBusyId(null); }
   };
 
@@ -95,6 +166,7 @@ function PaymentsTab() {
     try {
       const updated = await api.rejectPayment(id, reason);
       setPayments((list) => list.map((p) => (p.id === id ? { ...p, ...updated } : p)));
+      onChange?.();
     } catch (e) { setError(e.message); } finally { setBusyId(null); }
   };
 
@@ -153,12 +225,17 @@ function PaymentsTab() {
 
 export default function Admin() {
   const [tab, setTab] = useState("users");
+  const [statsKey, setStatsKey] = useState(0);
+  const refreshStats = () => setStatsKey((k) => k + 1);
+
   return (
     <main className="container py-5">
       <div className="mb-4">
         <h2 className="fw-bold mb-1"><i className="fas fa-user-shield text-primary me-2"></i>Admin Panel</h2>
         <p className="text-muted mb-0">Manage users and review payments.</p>
       </div>
+
+      <StatsBar refreshKey={statsKey} />
 
       <ul className="nav nav-pills mb-4 gap-2">
         <li className="nav-item">
@@ -173,7 +250,7 @@ export default function Admin() {
         </li>
       </ul>
 
-      {tab === "users" ? <UsersTab /> : <PaymentsTab />}
+      {tab === "users" ? <UsersTab onChange={refreshStats} /> : <PaymentsTab onChange={refreshStats} />}
     </main>
   );
 }

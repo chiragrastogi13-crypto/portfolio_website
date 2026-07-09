@@ -70,6 +70,14 @@ class AdminUserOut(BaseModel):
     portfolio_url: str = ""
 
 
+class AdminStats(BaseModel):
+    users: int
+    portfolios: int
+    published: int
+    subscribers: int
+    pending_payments: int
+
+
 # --- Payments ---------------------------------------------------------------
 
 

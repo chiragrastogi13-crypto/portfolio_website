@@ -59,6 +59,8 @@ def get_current_user(
     user = db.query(models.User).filter(models.User.id == int(user_id)).first()
     if user is None:
         raise credentials_exc
+    if user.status == "disapproved":
+        raise HTTPException(status_code=403, detail="Your account has been disabled.")
     return user
 
 

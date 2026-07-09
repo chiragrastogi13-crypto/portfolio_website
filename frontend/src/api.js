@@ -77,7 +77,11 @@ export const api = {
     request("/api/payment/claim", { method: "POST", body: { plan, amount, reference } }),
   myPaymentStatus: () => request("/api/payment/my-status"),
   // admin
+  adminStats: () => request("/api/admin/stats"),
   adminUsers: () => request("/api/admin/users"),
+  blockUser: (id) => request(`/api/admin/users/${id}/block`, { method: "POST" }),
+  unblockUser: (id) => request(`/api/admin/users/${id}/unblock`, { method: "POST" }),
+  deleteUserPortfolio: (id) => request(`/api/admin/users/${id}/portfolio`, { method: "DELETE" }),
   adminPayments: () => request("/api/admin/payments"),
   approvePayment: (id) => request(`/api/admin/payments/${id}/approve`, { method: "POST" }),
   rejectPayment: (id, reason) => request(`/api/admin/payments/${id}/reject`, { method: "POST", body: { reason } }),

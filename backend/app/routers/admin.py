@@ -13,6 +13,43 @@ from ..mailer import send_email
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
+def _user_out(u: models.User) -> schemas.AdminUserOut:
+    p = u.portfolio
+    return schemas.AdminUserOut(
+        id=u.id,
+        email=u.email,
+        status=u.status,
+        is_admin=u.is_admin,
+        is_subscribed=u.is_subscribed,
+        has_portfolio=p is not None,
+        created_at=u.created_at,
+        portfolio_username=p.username if p else "",
+        portfolio_url=public_portfolio_url(p.username) if (p and p.is_published) else "",
+    )
+
+
+def _get_user(db: Session, user_id: int) -> models.User:
+    u = db.query(models.User).filter(models.User.id == user_id).first()
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+    return u
+
+
+@router.get("/stats", response_model=schemas.AdminStats)
+def stats(
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(auth.get_current_admin),
+):
+    """Dashboard counts for the admin panel."""
+    return schemas.AdminStats(
+        users=db.query(models.User).count(),
+        portfolios=db.query(models.Portfolio).count(),
+        published=db.query(models.Portfolio).filter(models.Portfolio.is_published == True).count(),
+        subscribers=db.query(models.User).filter(models.User.is_subscribed == True).count(),
+        pending_payments=db.query(models.Payment).filter(models.Payment.status == "pending").count(),
+    )
+
+
 @router.get("/users", response_model=list[schemas.AdminUserOut])
 def list_users(
     db: Session = Depends(get_db),
@@ -20,21 +57,50 @@ def list_users(
 ):
     """All registered users with their details (newest first)."""
     users = db.query(models.User).order_by(models.User.created_at.desc()).all()
-    out = []
-    for u in users:
-        p = u.portfolio
-        out.append(schemas.AdminUserOut(
-            id=u.id,
-            email=u.email,
-            status=u.status,
-            is_admin=u.is_admin,
-            is_subscribed=u.is_subscribed,
-            has_portfolio=p is not None,
-            created_at=u.created_at,
-            portfolio_username=p.username if p else "",
-            portfolio_url=public_portfolio_url(p.username) if (p and p.is_published) else "",
-        ))
-    return out
+    return [_user_out(u) for u in users]
+
+
+@router.post("/users/{user_id}/block", response_model=schemas.AdminUserOut)
+def block_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(auth.get_current_admin),
+):
+    """Disable an account (blocked users can't log in or use the API)."""
+    u = _get_user(db, user_id)
+    if u.is_admin:
+        raise HTTPException(status_code=400, detail="Cannot block an admin account")
+    u.status = "disapproved"
+    db.commit()
+    db.refresh(u)
+    return _user_out(u)
+
+
+@router.post("/users/{user_id}/unblock", response_model=schemas.AdminUserOut)
+def unblock_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(auth.get_current_admin),
+):
+    u = _get_user(db, user_id)
+    u.status = "approved"
+    db.commit()
+    db.refresh(u)
+    return _user_out(u)
+
+
+@router.delete("/users/{user_id}/portfolio", status_code=204)
+def delete_user_portfolio(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(auth.get_current_admin),
+):
+    """Delete a user's portfolio (their public page stops working)."""
+    u = _get_user(db, user_id)
+    if u.portfolio:
+        db.delete(u.portfolio)
+        db.commit()
+    return None
 
 
 def _out(p: models.Payment) -> schemas.AdminPaymentOut:

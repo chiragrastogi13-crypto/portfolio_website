@@ -35,6 +35,8 @@ def login(payload: schemas.UserLogin, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
         )
+    if user.status == "disapproved":
+        raise HTTPException(status_code=403, detail="Your account has been disabled.")
     return schemas.Token(access_token=auth.create_access_token(str(user.id)))
 
 
