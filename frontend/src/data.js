@@ -16,6 +16,23 @@ export const themeGradient = (id) => {
   return `linear-gradient(135deg, ${t.c1}, ${t.c2})`;
 };
 
+// Subscription plans (prices in ₹). Shared by the Home pricing section and the
+// Subscribe flow. Edit freely.
+export const PLANS = [
+  {
+    id: "starter", name: "Starter", price: 199, period: "one-time",
+    features: ["1 portfolio website", "All 20 layouts & 10 colors", "Image uploads", "Shareable live link"],
+  },
+  {
+    id: "professional", name: "Professional", price: 499, period: "one-time", popular: true,
+    features: ["Everything in Starter", "Interactive 3D design", "Custom section titles", "Priority rendering"],
+  },
+  {
+    id: "business", name: "Business", price: 999, period: "one-time",
+    features: ["Everything in Professional", "Premium support", "Early access to new designs", "Remove branding (soon)"],
+  },
+];
+
 // The 10 available layouts (structure). Each maps to a .layout-<id> CSS class.
 export const LAYOUTS = [
   { id: "classic", label: "Classic" },

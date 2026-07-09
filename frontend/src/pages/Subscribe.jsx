@@ -2,22 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth.jsx";
-
-// Subscription plans (prices in ₹). Edit freely.
-const PLANS = [
-  {
-    id: "starter", name: "Starter", price: 199, period: "one-time",
-    features: ["1 portfolio website", "All 20 layouts & 10 colors", "Image uploads", "Shareable live link"],
-  },
-  {
-    id: "professional", name: "Professional", price: 499, period: "one-time", popular: true,
-    features: ["Everything in Starter", "Interactive 3D design", "Custom section titles", "Priority rendering"],
-  },
-  {
-    id: "business", name: "Business", price: 999, period: "one-time",
-    features: ["Everything in Professional", "Premium support", "Early access to new designs", "Remove branding (soon)"],
-  },
-];
+import { PLANS } from "../data.js";
 
 export default function Subscribe() {
   const { user, refresh } = useAuth();
