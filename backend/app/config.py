@@ -97,10 +97,11 @@ FRONTEND_URL = FRONTEND_ORIGINS[0].strip() if FRONTEND_ORIGINS else PUBLIC_BASE_
 
 def public_portfolio_url(username: str) -> str:
     """Build the public URL a client receives after generating their portfolio."""
+    scheme = "https" if BASE_PORT == 443 else "http"
+    port_part = "" if BASE_PORT in (80, 443) else f":{BASE_PORT}"
     if USE_PATH_URLS:
-        scheme = "https" if BASE_PORT == 443 else "http"
-        port_part = "" if BASE_PORT in (80, 443) else f":{BASE_PORT}"
-        # Root-level path (wlelo.com/<user>); Netlify rewrites it to the
+        # Root-level path (wlelo.com/<user>); a proxy rewrites it to the
         # backend's /p/<user> route. Cleaner than exposing /p/ in the link.
         return f"{scheme}://{BASE_HOST}{port_part}/{username}"
-    return f"http://{username}.{BASE_HOST}:{BASE_PORT}"
+    # Subdomain form (chirag.wlelo.com) — used on the Oracle VM + Caddy setup.
+    return f"{scheme}://{username}.{BASE_HOST}{port_part}"
