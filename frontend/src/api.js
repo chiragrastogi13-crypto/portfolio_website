@@ -76,7 +76,8 @@ export const api = {
   claimPayment: (plan, amount, reference) =>
     request("/api/payment/claim", { method: "POST", body: { plan, amount, reference } }),
   myPaymentStatus: () => request("/api/payment/my-status"),
-  // admin (payments)
+  // admin
+  adminUsers: () => request("/api/admin/users"),
   adminPayments: () => request("/api/admin/payments"),
   approvePayment: (id) => request(`/api/admin/payments/${id}/approve`, { method: "POST" }),
   rejectPayment: (id, reason) => request(`/api/admin/payments/${id}/reject`, { method: "POST", body: { reason } }),

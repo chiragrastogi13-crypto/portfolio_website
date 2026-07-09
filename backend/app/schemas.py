@@ -66,6 +66,8 @@ class AdminUserOut(BaseModel):
     is_subscribed: bool
     has_portfolio: bool
     created_at: datetime
+    portfolio_username: str = ""
+    portfolio_url: str = ""
 
 
 # --- Payments ---------------------------------------------------------------

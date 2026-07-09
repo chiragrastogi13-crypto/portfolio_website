@@ -6,10 +6,35 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
+from ..config import public_portfolio_url
 from ..database import get_db
 from ..mailer import send_email
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+@router.get("/users", response_model=list[schemas.AdminUserOut])
+def list_users(
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(auth.get_current_admin),
+):
+    """All registered users with their details (newest first)."""
+    users = db.query(models.User).order_by(models.User.created_at.desc()).all()
+    out = []
+    for u in users:
+        p = u.portfolio
+        out.append(schemas.AdminUserOut(
+            id=u.id,
+            email=u.email,
+            status=u.status,
+            is_admin=u.is_admin,
+            is_subscribed=u.is_subscribed,
+            has_portfolio=p is not None,
+            created_at=u.created_at,
+            portfolio_username=p.username if p else "",
+            portfolio_url=public_portfolio_url(p.username) if (p and p.is_published) else "",
+        ))
+    return out
 
 
 def _out(p: models.Payment) -> schemas.AdminPaymentOut:
