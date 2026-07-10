@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth.jsx";
+import { PENDING_SAMPLE_KEY } from "../App.jsx";
 import { DEFAULT_DATA, withIds, stripIds, newId, SOCIAL_KEYS, THEMES, LAYOUTS } from "../data.js";
 import Editable, { EditableImage } from "../components/Editable.jsx";
 
@@ -41,17 +42,41 @@ export default function Editor() {
   useEffect(() => { if (user && !user.is_subscribed) navigate("/subscribe", { replace: true }); }, [user, navigate]);
 
   useEffect(() => {
-    api.getPortfolio()
-      .then((p) => {
-        const merged = { ...DEFAULT_DATA, ...p.data };
-        setData(withIds(merged));
-        setTheme(merged.theme || "aurora");
-        setLayout(merged.layout || "classic");
+    let cancelled = false;
+    const applyData = (raw) => {
+      const merged = { ...DEFAULT_DATA, ...raw };
+      setData(withIds(merged));
+      setTheme(merged.theme || "aurora");
+      setLayout(merged.layout || "classic");
+    };
+    (async () => {
+      try {
+        const p = await api.getPortfolio();
+        if (cancelled) return;
+        applyData(p.data);
         setUsername(p.username);
         setIsNew(false);
-      })
-      .catch((e) => { if (e.status !== 404) setError(e.message); setIsNew(true); })
-      .finally(() => setLoading(false));
+        // They already have a portfolio; never overwrite it with a sample.
+        localStorage.removeItem(PENDING_SAMPLE_KEY);
+      } catch (e) {
+        if (cancelled) return;
+        if (e.status !== 404) { setError(e.message); return; }
+        // No portfolio yet → fresh build. If the user chose a design via
+        // "Own it", seed the editor with that sample's full content + design.
+        setIsNew(true);
+        const slug = localStorage.getItem(PENDING_SAMPLE_KEY);
+        if (slug) {
+          try {
+            const s = await api.sampleData(slug);
+            if (!cancelled && s?.data) applyData(s.data);
+          } catch (_) { /* sample fetch failed → keep the blank default */ }
+          localStorage.removeItem(PENDING_SAMPLE_KEY);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   // Apply the chosen design (color) + layout (structure) as body classes so the

@@ -71,6 +71,7 @@ export const api = {
     request(`/api/portfolio/check-username?username=${encodeURIComponent(u)}`, { auth: false }),
   // samples
   samples: () => request("/api/samples", { auth: false }),
+  sampleData: (slug) => request(`/api/samples/${encodeURIComponent(slug)}`, { auth: false }),
   // payment
   paymentInfo: () => request("/api/payment/info", { auth: false }),
   claimPayment: (plan, amount, reference) =>

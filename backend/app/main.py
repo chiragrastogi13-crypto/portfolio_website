@@ -204,7 +204,7 @@ def sample_page(slug: str, request: Request):
                 "base_port": BASE_PORT,
                 "home_url": FRONTEND_URL,
                 "is_sample": True,
-                "own_url": f"{FRONTEND_URL}/subscribe",
+                "own_url": f"{FRONTEND_URL}/subscribe?sample={s.slug}",
             },
         )
     finally:

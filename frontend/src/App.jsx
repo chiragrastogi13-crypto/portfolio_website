@@ -12,6 +12,12 @@ import Admin from "./pages/Admin.jsx";
 import Hire from "./pages/Hire.jsx";
 import HireDetail from "./pages/HireDetail.jsx";
 
+// When a visitor clicks "Own it" on a sample, the backend links them to
+// /subscribe?sample=<slug>. We stash the slug here so it survives the
+// register → login → payment-approval detour (those redirects drop the query
+// string). The editor consumes it to pre-fill a brand-new portfolio.
+export const PENDING_SAMPLE_KEY = "wl_pending_sample";
+
 function Nav() {
   const { user, logout } = useAuth();
   const [scrolled, setScrolled] = useState(false);
@@ -82,6 +88,13 @@ export default function App() {
   // The editor is a full-screen, immersive page (its own toolbar), so we hide
   // the site nav and footer there.
   const immersive = location.pathname === "/editor";
+
+  // Capture ?sample=<slug> as early as possible (before RequireAuth can bounce
+  // the user to /login and drop the query) so "Own it" carries through.
+  useEffect(() => {
+    const slug = new URLSearchParams(location.search).get("sample");
+    if (slug) localStorage.setItem(PENDING_SAMPLE_KEY, slug);
+  }, [location.search]);
 
   return (
     <>
