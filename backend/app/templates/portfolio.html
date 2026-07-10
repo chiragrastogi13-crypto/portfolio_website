@@ -14,7 +14,15 @@
   <link rel="stylesheet" href="/static/blogger.css">
 </head>
 {% set icons = {'github':'fa-github','linkedin':'fa-linkedin-in','twitter':'fa-twitter','instagram':'fa-instagram','dribbble':'fa-dribbble','youtube':'fa-youtube','facebook':'fa-facebook-f'} %}
-<body class="theme-{{ d.theme or 'aurora' }} layout-{{ d.layout or 'classic' }}">
+<body class="theme-{{ d.theme or 'aurora' }} layout-{{ d.layout or 'classic' }}{% if is_sample %} is-sample{% endif %}">
+
+  {% if is_sample %}
+  <!-- Sample banner: this is a showcase design, offer to make it their own -->
+  <div class="sample-ribbon">
+    <span><i class="fas fa-eye me-2"></i>You're viewing a sample design</span>
+    <a href="{{ own_url }}" class="own-it-btn"><i class="fas fa-wand-magic-sparkles me-2"></i>Own it</a>
+  </div>
+  {% endif %}
 
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg pub-nav sticky-top">
@@ -251,6 +259,27 @@
       <div class="copyright">© {{ d.name }} · Built with <a href="{{ home_url }}" style="color:var(--secondary-color)">Website Lelo</a></div>
     </div>
   </footer>
+
+  {% if is_sample %}
+  <!-- Always-visible floating CTA so the "Own it" action follows the user down the page -->
+  <a href="{{ own_url }}" class="own-it-fab"><i class="fas fa-wand-magic-sparkles"></i><span>Own this design</span></a>
+  <style>
+    .sample-ribbon{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;
+      padding:10px 16px;background:linear-gradient(90deg,#6c5ce7,#8e7bff);color:#fff;font-weight:600;
+      font-size:.95rem;text-align:center}
+    .sample-ribbon .own-it-btn{display:inline-flex;align-items:center;background:#fff;color:#5546d6;
+      padding:6px 18px;border-radius:999px;font-weight:700;text-decoration:none;
+      box-shadow:0 4px 14px rgba(0,0,0,.15);transition:transform .15s ease,box-shadow .15s ease}
+    .sample-ribbon .own-it-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.22)}
+    .own-it-fab{position:fixed;right:22px;bottom:22px;z-index:1080;display:inline-flex;align-items:center;
+      gap:10px;padding:14px 22px;border-radius:999px;background:linear-gradient(90deg,#6c5ce7,#8e7bff);
+      color:#fff;font-weight:700;text-decoration:none;box-shadow:0 10px 30px rgba(108,92,231,.45);
+      transition:transform .15s ease,box-shadow .15s ease}
+    .own-it-fab:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 14px 38px rgba(108,92,231,.55);color:#fff}
+    .own-it-fab i{font-size:1.05rem}
+    @media (max-width:576px){.own-it-fab span{display:none}.own-it-fab{padding:16px;gap:0}}
+  </style>
+  {% endif %}
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
