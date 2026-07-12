@@ -135,17 +135,28 @@ def plan_uses_subdomain(plan: str) -> bool:
     return not USE_PATH_URLS
 
 
-def public_portfolio_url(username: str, plan: str | None = None) -> str:
-    """Build the public URL a client receives after generating their portfolio.
+# URL namespaces a portfolio can live in. Usernames are unique *within* a kind.
+URL_KIND_PATH = "path"            # Starter          -> wlelo.com/<user>
+URL_KIND_SUBDOMAIN = "subdomain"  # Professional/Biz -> <user>.wlelo.com
 
-    The URL shape depends on the owner's plan (subdomain vs path). Pass the
-    owner's plan; when omitted/unknown it falls back to the deployment default.
-    """
+
+def plan_url_kind(plan: str) -> str:
+    """Which URL namespace a user's portfolio belongs to, based on their plan."""
+    return URL_KIND_SUBDOMAIN if plan_uses_subdomain(plan) else URL_KIND_PATH
+
+
+def portfolio_url(username: str, url_kind: str) -> str:
+    """Build the public URL for a portfolio from its stored url_kind."""
     scheme = "https" if BASE_PORT == 443 else "http"
     port_part = "" if BASE_PORT in (80, 443) else f":{BASE_PORT}"
-    if plan_uses_subdomain(plan):
+    if url_kind == URL_KIND_SUBDOMAIN:
         # Subdomain form (chirag.wlelo.com) — Professional/Business.
         return f"{scheme}://{username}.{BASE_HOST}{port_part}"
-    # Root-level path (wlelo.com/<user>) — Starter. A proxy rewrites it to the
+    # Root-level path (wlelo.com/<user>) — Starter. Caddy rewrites it to the
     # backend's /p/<user> route. Cleaner than exposing /p/ in the link.
     return f"{scheme}://{BASE_HOST}{port_part}/{username}"
+
+
+def public_portfolio_url(username: str, plan: str | None = None) -> str:
+    """Public URL for a username given the owner's plan (URL shape from plan)."""
+    return portfolio_url(username, plan_url_kind(plan))

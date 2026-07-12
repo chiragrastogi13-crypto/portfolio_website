@@ -68,7 +68,7 @@ export const api = {
   updatePortfolio: (data) => request("/api/portfolio", { method: "PUT", body: data }),
   generate: () => request("/api/portfolio/generate", { method: "POST" }),
   checkUsername: (u) =>
-    request(`/api/portfolio/check-username?username=${encodeURIComponent(u)}`, { auth: false }),
+    request(`/api/portfolio/check-username?username=${encodeURIComponent(u)}`),
   // samples
   samples: () => request("/api/samples", { auth: false }),
   sampleData: (slug) => request(`/api/samples/${encodeURIComponent(slug)}`, { auth: false }),

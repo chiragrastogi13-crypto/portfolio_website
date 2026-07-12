@@ -8,7 +8,7 @@ payments later).
 """
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -43,8 +43,14 @@ class Portfolio(Base):
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
 
-    # username = subdomain slug (URL-safe, globally unique).
-    username = Column(String, unique=True, index=True, nullable=False)
+    # username = URL slug. Uniqueness is scoped to the URL namespace (url_kind),
+    # so "chirag" can exist once as a Starter path URL (wlelo.com/chirag) AND
+    # once as a Professional/Business subdomain (chirag.wlelo.com) — different
+    # people, different URLs. Within one namespace it must be unique.
+    username = Column(String, index=True, nullable=False)
+    # "path" (Starter) | "subdomain" (Professional/Business). Set at creation
+    # from the owner's plan; decides both the public URL and how it's routed.
+    url_kind = Column(String, default="subdomain", nullable=False)
 
     # The entire portfolio content as JSON text.
     data_json = Column(Text, default="{}")
@@ -54,6 +60,10 @@ class Portfolio(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     owner = relationship("User", back_populates="portfolio")
+
+    __table_args__ = (
+        UniqueConstraint("username", "url_kind", name="uq_portfolio_username_kind"),
+    )
 
 
 class Payment(Base):

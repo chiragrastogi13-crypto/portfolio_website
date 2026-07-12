@@ -6,7 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
-from ..config import public_portfolio_url
+from ..config import portfolio_url
 from ..database import get_db
 from ..mailer import send_email
 
@@ -24,7 +24,7 @@ def _user_out(u: models.User) -> schemas.AdminUserOut:
         has_portfolio=p is not None,
         created_at=u.created_at,
         portfolio_username=p.username if p else "",
-        portfolio_url=public_portfolio_url(p.username, u.plan) if (p and p.is_published) else "",
+        portfolio_url=portfolio_url(p.username, p.url_kind) if (p and p.is_published) else "",
         plan=u.plan or "",
     )
 

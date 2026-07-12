@@ -31,22 +31,46 @@ from .routers import requirements as requirements_router
 Base.metadata.create_all(bind=engine)
 
 
-def _ensure_user_columns():
-    """Add columns introduced after the DB was first created (lightweight migration).
+def _ensure_schema():
+    """Add columns/indexes introduced after the DB was first created.
 
-    create_all() never ALTERs existing tables, so a DB seeded before `plan` was
-    added would 500 on every user query. Add it in place if missing.
+    create_all() never ALTERs existing tables, so DBs seeded before these were
+    added need an in-place migration. All steps are idempotent.
     """
     from sqlalchemy import inspect, text
 
     insp = inspect(engine)
-    existing = {c["name"] for c in insp.get_columns("users")}
-    if "plan" not in existing:
+
+    # users.plan — the purchased plan name (drives templates + URL shape).
+    if "plan" not in {c["name"] for c in insp.get_columns("users")}:
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR DEFAULT ''"))
 
+    # portfolios.url_kind — the URL namespace ('path' | 'subdomain'). Usernames
+    # are unique per-namespace, so the old global-unique index on username is
+    # replaced by a composite (username, url_kind) unique index.
+    if "url_kind" not in {c["name"] for c in insp.get_columns("portfolios")}:
+        with engine.begin() as conn:
+            conn.execute(text(
+                "ALTER TABLE portfolios ADD COLUMN url_kind VARCHAR NOT NULL DEFAULT 'subdomain'"
+            ))
+            # Backfill existing portfolios from their owner's plan.
+            conn.execute(text(
+                "UPDATE portfolios SET url_kind = 'path' WHERE owner_id IN "
+                "(SELECT id FROM users WHERE lower(plan) = 'starter')"
+            ))
+            # Swap the single-column unique index for a per-namespace one.
+            conn.execute(text("DROP INDEX IF EXISTS ix_portfolios_username"))
+            conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_portfolios_username ON portfolios(username)"
+            ))
+            conn.execute(text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_portfolio_username_kind "
+                "ON portfolios(username, url_kind)"
+            ))
 
-_ensure_user_columns()
+
+_ensure_schema()
 
 
 def _ensure_admin():
@@ -128,12 +152,18 @@ def _extract_subdomain(host: str) -> str | None:
     return None
 
 
-def _render_portfolio(request: Request, username: str) -> HTMLResponse:
+def _render_portfolio(request: Request, username: str, url_kind: str) -> HTMLResponse:
     db = SessionLocal()
     try:
+        # Usernames are unique per namespace, so a subdomain request must match a
+        # subdomain-kind portfolio and a /p/ (path) request a path-kind one — the
+        # same name in the other namespace belongs to a different owner.
         p = (
             db.query(models.Portfolio)
-            .filter(models.Portfolio.username == username)
+            .filter(
+                models.Portfolio.username == username,
+                models.Portfolio.url_kind == url_kind,
+            )
             .first()
         )
         if not p or not p.is_published:
@@ -178,7 +208,7 @@ async def subdomain_router(request: Request, call_next):
     # /static/blogger.css, /api/*) passes through so assets load normally.
     sub = _extract_subdomain(request.headers.get("host", ""))
     if sub and request.url.path == "/":
-        return _render_portfolio(request, sub)
+        return _render_portfolio(request, sub, "subdomain")
     return await call_next(request)
 
 
@@ -196,8 +226,8 @@ def health():
 
 @app.get("/p/{username}", response_class=HTMLResponse, include_in_schema=False)
 def path_portfolio(username: str, request: Request):
-    """Path-based portfolio route for deployments without wildcard subdomains."""
-    return _render_portfolio(request, username)
+    """Path-based portfolio route (Starter plan URLs: wlelo.com/<user>)."""
+    return _render_portfolio(request, username, "path")
 
 
 @app.get("/sample/{slug}", response_class=HTMLResponse, include_in_schema=False)

@@ -13,15 +13,14 @@ from datetime import datetime
 
 from .. import auth, images, models, schemas
 from . import auth as auth_router
-from ..config import PUBLIC_BASE_URL, public_portfolio_url
+from ..config import PUBLIC_BASE_URL, plan_url_kind, portfolio_url
 from ..database import get_db
 
 router = APIRouter(prefix="/api", tags=["portfolio"])
 
 
 def _out(p: models.Portfolio) -> schemas.PortfolioOut:
-    plan = p.owner.plan if p.owner else ""
-    return schemas.PortfolioOut.from_model(p, public_portfolio_url(p.username, plan))
+    return schemas.PortfolioOut.from_model(p, portfolio_url(p.username, p.url_kind))
 
 
 # --- Subscription gate ------------------------------------------------------
@@ -66,9 +65,13 @@ def create_portfolio(
     if current.portfolio:
         raise HTTPException(status_code=400, detail="You already have a portfolio")
 
+    url_kind = plan_url_kind(current.plan)
     taken = (
         db.query(models.Portfolio)
-        .filter(models.Portfolio.username == payload.username)
+        .filter(
+            models.Portfolio.username == payload.username,
+            models.Portfolio.url_kind == url_kind,
+        )
         .first()
     )
     if taken:
@@ -77,6 +80,7 @@ def create_portfolio(
     p = models.Portfolio(
         owner_id=current.id,
         username=payload.username,
+        url_kind=url_kind,
         data_json=json.dumps(payload.data),
     )
     db.add(p)
@@ -147,14 +151,26 @@ async def upload_image(
 
 
 @router.get("/portfolio/check-username")
-def check_username(username: str, db: Session = Depends(get_db)):
+def check_username(
+    username: str,
+    db: Session = Depends(get_db),
+    current: models.User = Depends(auth.get_current_user),
+):
+    """Availability is scoped to the caller's URL namespace (plan): the same
+    name can be free on a Starter path URL yet taken on a subdomain, and vice
+    versa. We check against the namespace this user would publish into.
+    """
     try:
         cleaned = schemas.clean_username(username)
     except ValueError as e:
         return {"available": False, "reason": str(e)}
+    url_kind = plan_url_kind(current.plan)
     taken = (
         db.query(models.Portfolio)
-        .filter(models.Portfolio.username == cleaned)
+        .filter(
+            models.Portfolio.username == cleaned,
+            models.Portfolio.url_kind == url_kind,
+        )
         .first()
     )
     return {"available": taken is None, "username": cleaned}

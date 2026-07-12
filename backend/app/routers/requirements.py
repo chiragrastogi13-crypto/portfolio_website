@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
-from ..config import public_portfolio_url
+from ..config import portfolio_url as build_portfolio_url
 from ..database import get_db
 
 router = APIRouter(prefix="/api/requirements", tags=["hiring"])
@@ -188,7 +188,9 @@ def apply_to_requirement(
     # Auto-attach the applicant's live portfolio URL when it's published.
     portfolio_url = ""
     if current.portfolio and current.portfolio.is_published:
-        portfolio_url = public_portfolio_url(current.portfolio.username)
+        portfolio_url = build_portfolio_url(
+            current.portfolio.username, current.portfolio.url_kind
+        )
 
     a = models.Application(
         requirement_id=req_id,
