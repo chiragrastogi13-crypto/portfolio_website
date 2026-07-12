@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../api";
+import { useDialog } from "../components/Dialog.jsx";
 
 const BADGE = {
   approved: "text-bg-success",
@@ -46,6 +47,7 @@ function UsersTab({ onChange }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
+  const dialog = useDialog();
 
   const load = useCallback(() => {
     setLoading(true);
@@ -57,7 +59,7 @@ function UsersTab({ onChange }) {
 
   const toggleBlock = async (u) => {
     const blocking = u.status !== "disapproved";
-    if (blocking && !window.confirm(`Block ${u.email}? They won't be able to log in or use the site.`)) return;
+    if (blocking && !(await dialog.confirm({ title: "Block this user?", message: `${u.email} won't be able to log in or use the site.`, confirmText: "Block", danger: true }))) return;
     setBusyId(u.id); setError("");
     try {
       const updated = blocking ? await api.blockUser(u.id) : await api.unblockUser(u.id);
@@ -66,7 +68,7 @@ function UsersTab({ onChange }) {
   };
 
   const delPortfolio = async (u) => {
-    if (!window.confirm(`Delete ${u.email}'s portfolio "${u.portfolio_username}"? Their public page will stop working. This cannot be undone.`)) return;
+    if (!(await dialog.confirm({ title: "Delete this portfolio?", message: `${u.email}'s portfolio "${u.portfolio_username}" will be deleted and their public page will stop working. This cannot be undone.`, confirmText: "Delete", danger: true }))) return;
     setBusyId(u.id); setError("");
     try {
       await api.deleteUserPortfolio(u.id);
@@ -143,6 +145,7 @@ function PaymentsTab({ onChange }) {
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
   const [filter, setFilter] = useState("pending");
+  const dialog = useDialog();
 
   const load = () => {
     setLoading(true);
@@ -160,7 +163,7 @@ function PaymentsTab({ onChange }) {
   };
 
   const reject = async (id) => {
-    const reason = window.prompt("Reason for rejecting this payment? (emailed to the user)", "Payment not received / details didn't match.");
+    const reason = await dialog.prompt({ title: "Reject payment", message: "Reason for rejecting (emailed to the user):", defaultValue: "Payment not received / details didn't match.", confirmText: "Reject payment" });
     if (reason === null) return;
     setBusyId(id); setError("");
     try {

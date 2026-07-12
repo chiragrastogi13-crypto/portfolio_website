@@ -5,6 +5,7 @@ import { useAuth } from "../auth.jsx";
 import { PENDING_SAMPLE_KEY } from "../App.jsx";
 import { DEFAULT_DATA, withIds, stripIds, newId, SOCIAL_KEYS, THEMES, LAYOUTS } from "../data.js";
 import Editable, { EditableImage } from "../components/Editable.jsx";
+import { useDialog } from "../components/Dialog.jsx";
 
 const SKILL_COLORS = ["var(--primary-color)", "var(--accent-color)", "var(--success-color)", "var(--warning-color)"];
 const SOCIAL_ICONS = { github: "fa-github", linkedin: "fa-linkedin-in", twitter: "fa-twitter", instagram: "fa-instagram", dribbble: "fa-dribbble", youtube: "fa-youtube", facebook: "fa-facebook-f" };
@@ -23,6 +24,7 @@ function Head({ eyebrow, value, onCommit }) {
 export default function Editor() {
   const { user, refresh } = useAuth();
   const navigate = useNavigate();
+  const dialog = useDialog();
 
   const [data, setData] = useState(() => withIds(DEFAULT_DATA));
   const [isNew, setIsNew] = useState(true);
@@ -131,7 +133,10 @@ export default function Editor() {
     debounce.current = setTimeout(async () => { try { setUname(await api.checkUsername(v)); } catch (_) {} }, 350);
   };
 
-  const editUrl = (label, current, apply) => { const url = window.prompt(`${label}:`, current || ""); if (url !== null) touched(apply.bind(null, url.trim())); };
+  const editUrl = async (label, current, apply) => {
+    const url = await dialog.prompt({ title: label, placeholder: "https://…", defaultValue: current || "", confirmText: "Save" });
+    if (url !== null) touched(apply.bind(null, url.trim()));
+  };
 
   // --- Change the live URL slug (existing portfolios) ---
   const startEditUrl = () => { urlSnapshot.current = username; setUname(null); setError(""); setEditingUrl(true); };
@@ -141,7 +146,7 @@ export default function Editor() {
     if (!username || username.length < 3) { setError("Username must be 3+ chars."); return; }
     if (uname && !uname.available) { setError("That username isn't available."); return; }
     if (username === urlSnapshot.current) { setEditingUrl(false); return; }
-    if (!window.confirm("Change your URL? Your old link will stop working.")) return;
+    if (!(await dialog.confirm({ title: "Change your URL?", message: "Your old link will stop working once you save.", confirmText: "Change URL" }))) return;
     setBusy(true);
     try {
       const updated = await api.changeUsername(username);

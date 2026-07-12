@@ -169,6 +169,37 @@ h1, h2, h3, h4, h5, h6, .head h2, .hero h1, .navbar-brand, .nav-brand { font-fam
 .hero-socials a { color: var(--hero-text); font-size: 1.3rem; margin-right: 16px; transition: all 0.25s; display: inline-block; cursor: pointer; }
 .hero-socials a:hover { transform: translateY(-4px); color: var(--accent-color); }
 
+/* ============ App dialogs (confirm / prompt / alert) ============ */
+/* Fixed neutral palette so dialogs stay professional and consistent even when
+   the editor has applied a portfolio theme class to <body>. */
+.wl-dialog-backdrop {
+  position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: 20px;
+  background: rgba(17, 24, 39, 0.55); backdrop-filter: blur(4px);
+  animation: wlDlgFade 0.15s ease;
+}
+.wl-dialog {
+  width: 100%; max-width: 440px; background: #ffffff; border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28); padding: 26px 26px 22px;
+  animation: wlDlgPop 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+.wl-dialog-title { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.2rem; margin: 0 0 8px; color: #111827; }
+.wl-dialog-msg { color: #6b7280; margin: 0 0 18px; line-height: 1.55; font-size: 0.96rem; }
+.wl-dialog-input {
+  width: 100%; margin-bottom: 20px; padding: 11px 14px; font-size: 0.95rem;
+  border: 1px solid #e5e7eb; border-radius: 10px; color: #111827; background: #fff; outline: none;
+}
+.wl-dialog-input:focus { border-color: #6c5ce7; box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15); }
+.wl-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.wl-dialog-btn { border: none; border-radius: 10px; font-weight: 600; padding: 9px 20px; font-size: 0.92rem; cursor: pointer; transition: all 0.18s ease; }
+.wl-dialog-cancel { background: #f3f4f6; color: #374151; }
+.wl-dialog-cancel:hover { background: #e5e7eb; }
+.wl-dialog-primary { background: #6c5ce7; color: #fff; }
+.wl-dialog-primary:hover { background: #5b4ee5; transform: translateY(-1px); }
+.wl-dialog-danger { background: #ef4444; color: #fff; }
+.wl-dialog-danger:hover { background: #dc2626; transform: translateY(-1px); }
+@keyframes wlDlgFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wlDlgPop { from { opacity: 0; transform: translateY(10px) scale(0.96); } to { opacity: 1; transform: none; } }
+
 /* Editor-only: remove a social icon you don't use, or add a missing one. */
 .social-edit-item { position: relative; display: inline-block; }
 .social-edit-item .social-remove {

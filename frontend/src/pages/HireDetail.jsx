@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth.jsx";
+import { useDialog } from "../components/Dialog.jsx";
 
 const statusBadge = (s) =>
   ({ pending: "bg-warning text-dark", accepted: "bg-success", rejected: "bg-danger", open: "bg-success", closed: "bg-secondary" }[s] || "bg-secondary");
@@ -53,6 +54,7 @@ function Applicants({ reqId }) {
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const dialog = useDialog();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,7 +74,7 @@ function Applicants({ reqId }) {
       const updated = action === "accept" ? await api.acceptApplication(id) : await api.rejectApplication(id);
       setApps((prev) => prev.map((a) => (a.id === id ? updated : a)));
     } catch (e) {
-      alert(e.message);
+      await dialog.alert({ title: "Couldn't update", message: e.message });
     }
   };
 
@@ -118,6 +120,7 @@ export default function HireDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const dialog = useDialog();
   const [r, setR] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -137,11 +140,11 @@ export default function HireDetail() {
   useEffect(() => { load(); }, [load]);
 
   const close = async () => {
-    if (!confirm("Close this requirement? It will stop accepting new applications.")) return;
+    if (!(await dialog.confirm({ title: "Close this requirement?", message: "It will stop accepting new applications.", confirmText: "Close" }))) return;
     setR(await api.closeRequirement(id));
   };
   const remove = async () => {
-    if (!confirm("Delete this requirement permanently?")) return;
+    if (!(await dialog.confirm({ title: "Delete this requirement?", message: "This permanently removes the requirement and its applications.", confirmText: "Delete", danger: true }))) return;
     await api.deleteRequirement(id);
     navigate("/hire");
   };
