@@ -33,8 +33,9 @@ function Nav() {
   return (
     <nav className={`navbar navbar-expand-lg navbar-light pub-nav sticky-top ${scrolled ? "pub-nav-scrolled" : ""}`}>
       <div className="container">
-        <Link to="/" className="navbar-brand d-flex align-items-center gap-2">
-          <span className="nav-logo">✨</span>Website<span>Lelo</span>
+        <Link to="/" className="navbar-brand nav-brand-stack">
+          <img src="/logo.png" alt="Website Lelo" className="nav-logo-img" />
+          <span className="nav-subname">Website <span>Lelo</span></span>
         </Link>
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon"></span>

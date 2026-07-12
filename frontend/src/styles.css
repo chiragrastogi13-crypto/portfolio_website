@@ -125,9 +125,14 @@ h1, h2, h3, h4, h5, h6, .head h2, .hero h1, .navbar-brand, .nav-brand { font-fam
   transition: box-shadow .3s ease, padding .3s ease;
 }
 .pub-nav-scrolled { box-shadow: 0 10px 30px rgba(0,0,0,0.10); padding-top: 9px; padding-bottom: 9px; }
-.pub-nav .nav-logo { font-size: 1.05rem; }
-.pub-nav .nav-brand { font-weight: 800; font-size: 1.3rem; color: var(--text); }
-.pub-nav .nav-brand span { color: var(--primary-color); }
+.pub-nav .nav-brand-stack { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; }
+.pub-nav .nav-logo-img { height: 44px; width: auto; display: block; transition: height .3s ease; }
+.pub-nav-scrolled .nav-logo-img { height: 36px; }
+.pub-nav .nav-subname {
+  font-family: var(--font-head); font-size: 0.95rem; font-weight: 700;
+  letter-spacing: -0.2px; line-height: 1; color: var(--text); margin-top: 4px;
+}
+.pub-nav .nav-subname span { color: var(--primary-color); }
 .pub-nav .nav-link { color: var(--text); font-weight: 500; margin: 0 6px; cursor: pointer; position: relative; transition: color .2s ease; }
 .pub-nav .nav-link:hover { color: var(--primary-color); }
 .pub-nav .nav-link.active { color: var(--primary-color); font-weight: 700; }
