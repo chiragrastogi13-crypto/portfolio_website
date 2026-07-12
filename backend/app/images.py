@@ -19,6 +19,20 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 MAX_BYTES = 12 * 1024 * 1024  # 12 MB
 MAX_DIM = 1600                 # longest side after resize
 
+# Resume / CV uploads: stored as-is (no processing), served from /uploads.
+MAX_DOC_BYTES = 15 * 1024 * 1024  # 15 MB
+ALLOWED_DOC_EXT = {".pdf", ".doc", ".docx"}
+
+
+def save_document(raw: bytes, filename: str) -> str:
+    """Save a resume/CV document unchanged. Returns the stored filename."""
+    ext = Path(filename or "").suffix.lower()
+    if ext not in ALLOWED_DOC_EXT:
+        raise ValueError("Unsupported file type")
+    name = f"{uuid.uuid4().hex}{ext}"
+    (UPLOAD_DIR / name).write_bytes(raw)
+    return name
+
 
 def enhance_and_save(raw: bytes) -> str:
     """Enhance image bytes and save as an optimized JPEG. Returns the filename."""

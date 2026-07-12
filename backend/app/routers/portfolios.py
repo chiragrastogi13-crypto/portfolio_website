@@ -179,6 +179,24 @@ async def upload_image(
     return {"url": f"{PUBLIC_BASE_URL}/uploads/{name}"}
 
 
+@router.post("/upload/resume")
+async def upload_resume(
+    file: UploadFile = File(...),
+    current: models.User = Depends(auth.get_current_user),
+):
+    """Accept a resume/CV (PDF/DOC/DOCX), store it, and return its public URL."""
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Empty file")
+    if len(raw) > images.MAX_DOC_BYTES:
+        raise HTTPException(status_code=413, detail="File too large (max 15 MB)")
+    try:
+        name = images.save_document(raw, file.filename)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Please upload a PDF, DOC, or DOCX file")
+    return {"url": f"{PUBLIC_BASE_URL}/uploads/{name}"}
+
+
 # --- Username availability --------------------------------------------------
 
 

@@ -37,8 +37,10 @@ export default function Editor() {
   const [layout, setLayout] = useState(DEFAULT_DATA.layout);
   const [uname, setUname] = useState(null);
   const [editingUrl, setEditingUrl] = useState(false);
+  const [resumeBusy, setResumeBusy] = useState(false);
   const debounce = useRef(null);
   const urlSnapshot = useRef("");
+  const resumeInputRef = useRef(null);
 
   const patch = (fn) => setData((prev) => { const next = structuredClone(prev); fn(next); return next; });
   const touched = (fn) => { patch(fn); setSaved(false); };
@@ -137,6 +139,24 @@ export default function Editor() {
     const url = await dialog.prompt({ title: label, placeholder: "https://…", defaultValue: current || "", confirmText: "Save" });
     if (url !== null) touched(apply.bind(null, url.trim()));
   };
+
+  // Résumé / CV: upload a file (stored on our server) or paste a link. Either
+  // way it fills the hero "Download CV" button's href.
+  const onResumeFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setResumeBusy(true); setError("");
+    try { const { url } = await api.uploadResume(file); touched((d) => { d.resumeUrl = url; }); }
+    catch (ex) { setError(ex.message || "Résumé upload failed"); }
+    finally { setResumeBusy(false); }
+  };
+  const setResumeLink = async () => {
+    const cur = data.resumeUrl && data.resumeUrl !== "#" ? data.resumeUrl : "";
+    const url = await dialog.prompt({ title: "Résumé / CV link", message: "Paste a link to your CV (Google Drive, Dropbox, your site…).", defaultValue: cur, placeholder: "https://…", confirmText: "Save" });
+    if (url !== null) touched((d) => { d.resumeUrl = url.trim() || "#"; });
+  };
+  const resumeSet = data.resumeUrl && data.resumeUrl !== "#";
 
   // --- Change the live URL slug (existing portfolios) ---
   const startEditUrl = () => { urlSnapshot.current = username; setUname(null); setError(""); setEditingUrl(true); };
@@ -251,6 +271,20 @@ export default function Editor() {
               <div className="hero-cta">
                 <span className="btn btn-light btn-rounded"><Editable tag="span" value={data.ctaText} onCommit={(v) => touched((d) => { d.ctaText = v; })} /></span>
                 <span className="btn btn-ghost btn-rounded"><Editable tag="span" value={data.resumeText} onCommit={(v) => touched((d) => { d.resumeText = v; })} /></span>
+              </div>
+              <div className="resume-tools mt-2">
+                <input ref={resumeInputRef} type="file" accept=".pdf,.doc,.docx,application/pdf" hidden onChange={onResumeFile} />
+                <button type="button" className="resume-chip" title="Upload your résumé/CV (PDF, DOC)" onClick={() => resumeInputRef.current?.click()} disabled={resumeBusy}>
+                  <i className={`fas ${resumeBusy ? "fa-spinner fa-spin" : "fa-file-arrow-up"}`}></i> {resumeBusy ? "Uploading…" : "Upload CV"}
+                </button>
+                <button type="button" className="resume-chip" title="Or paste a link to your CV" onClick={setResumeLink}>
+                  <i className="fas fa-link"></i> Link
+                </button>
+                {resumeSet && (
+                  <a className="resume-ok" href={data.resumeUrl} target="_blank" rel="noopener noreferrer" title={data.resumeUrl}>
+                    <i className="fas fa-circle-check"></i> CV attached
+                  </a>
+                )}
               </div>
               <div className="hero-socials mt-4">
                 {SOCIAL_KEYS.filter((k) => k in data.socials).map((k) => (

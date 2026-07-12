@@ -36,13 +36,13 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
   return res.json();
 }
 
-async function uploadImage(file) {
+async function uploadTo(endpoint, file) {
   const fd = new FormData();
   fd.append("file", file);
   // NOTE: don't set Content-Type — the browser adds the multipart boundary.
   const headers = {};
   if (getToken()) headers["Authorization"] = `Bearer ${getToken()}`;
-  const res = await fetch(`${API_BASE}/api/upload`, { method: "POST", headers, body: fd });
+  const res = await fetch(`${API_BASE}${endpoint}`, { method: "POST", headers, body: fd });
   if (!res.ok) {
     let detail = "Upload failed";
     try { detail = (await res.json()).detail || detail; } catch (_) {}
@@ -50,10 +50,12 @@ async function uploadImage(file) {
   }
   return res.json(); // { url }
 }
+const uploadImage = (file) => uploadTo("/api/upload", file);
 
 export const api = {
   base: API_BASE,
   uploadImage,
+  uploadResume: (file) => uploadTo("/api/upload/resume", file),
   // auth
   register: (email, password) =>
     request("/api/auth/register", { method: "POST", body: { email, password }, auth: false }),
