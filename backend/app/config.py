@@ -36,7 +36,9 @@ SMTP_HOST = os.getenv("SMTP_HOST", "")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-SMTP_FROM = os.getenv("SMTP_FROM", "")  # defaults to SMTP_USER
+SMTP_FROM = os.getenv("SMTP_FROM", "")  # defaults to MAIL_FROM / SMTP_USER
+# The address portfolio enquiries and app notifications are sent *from*.
+MAIL_FROM = os.getenv("MAIL_FROM", "info@wlelo.com")
 # Where "new payment" notifications go (your real inbox). Defaults to admin email.
 ADMIN_NOTIFY_EMAIL = os.getenv("ADMIN_NOTIFY_EMAIL", ADMIN_EMAIL)
 

@@ -8,7 +8,7 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 
-from .config import SMTP_FROM, SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER
+from .config import MAIL_FROM, SMTP_FROM, SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER
 
 
 def _log(msg: str) -> None:
@@ -17,8 +17,8 @@ def _log(msg: str) -> None:
     print(msg.encode("ascii", "replace").decode("ascii"), flush=True)
 
 
-def send_email(to: str, subject: str, body: str) -> bool:
-    sender = SMTP_FROM or SMTP_USER
+def send_email(to: str, subject: str, body: str, reply_to: str = "") -> bool:
+    sender = SMTP_FROM or MAIL_FROM or SMTP_USER
     if not (SMTP_HOST and SMTP_USER and SMTP_PASSWORD and to):
         _log(f"[email skipped - SMTP not configured] to={to} subject={subject}")
         return False
@@ -27,6 +27,8 @@ def send_email(to: str, subject: str, body: str) -> bool:
     msg["From"] = sender
     msg["To"] = to
     msg["Subject"] = subject
+    if reply_to:
+        msg["Reply-To"] = reply_to
     msg.set_content(body)
 
     try:

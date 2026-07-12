@@ -6,7 +6,7 @@ and evolve it without backend schema changes.
 """
 import json
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from datetime import datetime
@@ -15,6 +15,7 @@ from .. import auth, images, models, schemas
 from . import auth as auth_router
 from ..config import PUBLIC_BASE_URL, plan_url_kind, portfolio_url
 from ..database import get_db
+from ..mailer import send_email
 
 router = APIRouter(prefix="/api", tags=["portfolio"])
 
@@ -147,6 +148,58 @@ def generate_portfolio(
     db.commit()
     db.refresh(current.portfolio)
     return _out(current.portfolio)
+
+
+# --- Contact form: email the portfolio owner an enquiry ---------------------
+
+
+@router.post("/portfolio/contact")
+def contact_owner(
+    payload: schemas.ContactIn,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """A visitor filled the 'Hire Me' contact form. Email the owner the enquiry
+    (from info@wlelo.com), with the visitor's address as Reply-To."""
+    # Honeypot: bots fill the hidden field — accept silently, send nothing.
+    if payload.website.strip():
+        return {"ok": True}
+
+    p = (
+        db.query(models.Portfolio)
+        .filter(
+            models.Portfolio.username == payload.username,
+            models.Portfolio.url_kind == payload.url_kind,
+        )
+        .first()
+    )
+    if not p or not p.is_published or not p.owner:
+        raise HTTPException(status_code=404, detail="Portfolio not found")
+
+    # Deliver to the owner's account email + their displayed contact email.
+    recipients: list[str] = []
+    if p.owner.email:
+        recipients.append(p.owner.email)
+    data = json.loads(p.data_json or "{}")
+    contact_email = ((data.get("personal") or {}).get("email") or "").strip()
+    if contact_email and "@" in contact_email and contact_email.lower() not in {r.lower() for r in recipients}:
+        recipients.append(contact_email)
+    if not recipients:
+        raise HTTPException(status_code=400, detail="This portfolio has no contact address")
+
+    subject = f"New enquiry from your wlelo portfolio — {payload.subject.strip() or 'no subject'}"
+    body = (
+        f"You've received a new enquiry from your portfolio ({p.username}).\n\n"
+        f"Name:    {payload.name.strip()}\n"
+        f"Email:   {payload.email}\n"
+        f"Subject: {payload.subject.strip() or '(none)'}\n\n"
+        f"Message:\n{payload.message.strip()}\n\n"
+        f"---\n"
+        f"Reply directly to this email to respond to {payload.name.strip()}.\n"
+        f"Sent via wlelo.com"
+    )
+    background_tasks.add_task(send_email, ", ".join(recipients), subject, body, payload.email)
+    return {"ok": True}
 
 
 # --- Image upload + auto-enhance --------------------------------------------

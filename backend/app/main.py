@@ -181,6 +181,7 @@ def _render_portfolio(request: Request, username: str, url_kind: str) -> HTMLRes
                 "request": request,
                 "d": json.loads(p.data_json or "{}"),
                 "username": p.username,
+                "url_kind": p.url_kind,
                 "base_host": BASE_HOST,
                 "base_port": BASE_PORT,
                 "home_url": FRONTEND_URL,

@@ -140,6 +140,17 @@ class UsernameUpdate(BaseModel):
         return clean_username(v)
 
 
+class ContactIn(BaseModel):
+    """A visitor's enquiry submitted from a published portfolio's contact form."""
+    username: str
+    url_kind: str = "subdomain"
+    name: str = Field(min_length=1, max_length=120)
+    email: EmailStr
+    subject: str = Field(default="", max_length=200)
+    message: str = Field(min_length=1, max_length=5000)
+    website: str = ""  # honeypot — real users leave this empty
+
+
 class PortfolioOut(BaseModel):
     id: int
     username: str

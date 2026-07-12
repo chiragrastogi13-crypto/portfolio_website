@@ -234,15 +234,48 @@
           <div class="contact-info-card"><div class="ci-icon"><i class="fas fa-location-dot"></i></div><div><h6>Location</h6><span>{{ d.personal.location }}</span></div></div>
         </div>
         <div class="col-lg-7" data-aos="fade-left">
-          <form class="contact-form" onsubmit="event.preventDefault(); this.reset(); alert('Thanks! This is a demo form.');">
+          <form class="contact-form" id="wl-contact-form">
             <div class="row g-3">
-              <div class="col-md-6"><input class="form-control" placeholder="Your Name" required></div>
-              <div class="col-md-6"><input type="email" class="form-control" placeholder="Your Email" required></div>
-              <div class="col-12"><input class="form-control" placeholder="Subject"></div>
-              <div class="col-12"><textarea class="form-control" rows="5" placeholder="Your Message" required></textarea></div>
-              <div class="col-12"><button class="btn btn-primary btn-rounded">Send Message</button></div>
+              <div class="col-md-6"><input name="name" class="form-control" placeholder="Your Name" required></div>
+              <div class="col-md-6"><input name="email" type="email" class="form-control" placeholder="Your Email" required></div>
+              <div class="col-12"><input name="subject" class="form-control" placeholder="Subject"></div>
+              <div class="col-12"><textarea name="message" class="form-control" rows="5" placeholder="Your Message" required></textarea></div>
+              <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+              <div class="col-12 d-flex align-items-center gap-3">
+                <button class="btn btn-primary btn-rounded" type="submit">Send Message</button>
+                <span id="wl-contact-status" class="small fw-semibold"></span>
+              </div>
             </div>
           </form>
+          <script>
+          (function(){
+            var form = document.getElementById('wl-contact-form');
+            if(!form) return;
+            var status = document.getElementById('wl-contact-status');
+            var btn = form.querySelector('button[type=submit]');
+            {% if is_sample %}
+            form.addEventListener('submit', function(e){ e.preventDefault(); form.reset();
+              status.style.color = '#6c5ce7'; status.textContent = 'This is a sample — enquiries work on a real portfolio.'; });
+            {% else %}
+            form.addEventListener('submit', function(e){
+              e.preventDefault();
+              var fd = new FormData(form);
+              var payload = { username: {{ username|tojson }}, url_kind: {{ (url_kind or 'subdomain')|tojson }},
+                name: fd.get('name'), email: fd.get('email'), subject: fd.get('subject') || '',
+                message: fd.get('message'), website: fd.get('website') || '' };
+              btn.disabled = true; status.style.color = ''; status.textContent = 'Sending…';
+              fetch('/api/portfolio/contact', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+                .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
+                .then(function(res){
+                  if(res.ok){ form.reset(); status.style.color = '#16a34a'; status.textContent = '✓ Message sent! They’ll get back to you.'; }
+                  else { status.style.color = '#dc2626'; status.textContent = (res.j && res.j.detail) || 'Could not send. Please try again.'; }
+                })
+                .catch(function(){ status.style.color = '#dc2626'; status.textContent = 'Network error. Please try again.'; })
+                .finally(function(){ btn.disabled = false; });
+            });
+            {% endif %}
+          })();
+          </script>
         </div>
       </div>
     </div>
