@@ -4,7 +4,6 @@ import { api } from "../api";
 import { useAuth } from "../auth.jsx";
 import { PLANS } from "../data.js";
 import PlanCard from "../components/PlanCard.jsx";
-import { PENDING_SAMPLE_KEY } from "../App.jsx";
 
 export default function Subscribe() {
   const { user, refresh } = useAuth();
@@ -28,12 +27,11 @@ export default function Subscribe() {
       .finally(() => setChecking(false));
   }, []);
 
-  // If the user already built a portfolio, "Own it" (or landing here) should
-  // just reopen THEIR portfolio with their own details — not re-subscribe or
-  // seed a sample over their work. Send them straight to the editor.
+  // If the user already built a portfolio, skip the subscribe screen and go
+  // straight to the editor. We keep any pending sample so the editor can apply
+  // that sample's design (theme + layout) onto their existing content.
   useEffect(() => {
     if (user?.has_portfolio) {
-      localStorage.removeItem(PENDING_SAMPLE_KEY);
       navigate("/editor", { replace: true });
     }
   }, [user, navigate]);

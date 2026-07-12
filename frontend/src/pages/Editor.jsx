@@ -55,11 +55,23 @@ export default function Editor() {
       try {
         const p = await api.getPortfolio();
         if (cancelled) return;
-        applyData(p.data);
+        // If they came via "Own it" on a sample, keep their own content but
+        // adopt that sample's design (theme + layout). Shown as an unsaved
+        // draft — Save/Generate persists it. Otherwise load their data as-is.
+        const slug = localStorage.getItem(PENDING_SAMPLE_KEY);
+        let loaded = p.data;
+        if (slug) {
+          try {
+            const s = await api.sampleData(slug);
+            if (s?.data) loaded = { ...p.data, theme: s.data.theme || p.data.theme, layout: s.data.layout || p.data.layout };
+          } catch (_) { /* sample fetch failed → keep their data unchanged */ }
+          localStorage.removeItem(PENDING_SAMPLE_KEY);
+        }
+        if (cancelled) return;
+        applyData(loaded);
         setUsername(p.username);
         setIsNew(false);
-        // They already have a portfolio; never overwrite it with a sample.
-        localStorage.removeItem(PENDING_SAMPLE_KEY);
+        if (slug) setSaved(false);
       } catch (e) {
         if (cancelled) return;
         if (e.status !== 404) { setError(e.message); return; }
