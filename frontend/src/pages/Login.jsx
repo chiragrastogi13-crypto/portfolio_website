@@ -10,6 +10,7 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -35,7 +36,12 @@ export default function Login() {
             </div>
             <div className="mb-3">
               <label className="form-label">Password</label>
-              <input type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <div className="input-group">
+                <input type={showPassword ? "text" : "password"} className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPassword((s) => !s)} tabIndex={-1} aria-label={showPassword ? "Hide password" : "Show password"} title={showPassword ? "Hide password" : "Show password"}>
+                  <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
+                </button>
+              </div>
             </div>
             <button className="btn btn-primary w-100" disabled={busy}>{busy ? "Logging in…" : "Log in"}</button>
           </form>
