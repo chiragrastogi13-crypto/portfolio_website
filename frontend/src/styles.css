@@ -215,6 +215,14 @@ h1, h2, h3, h4, h5, h6, .head h2, .hero h1, .navbar-brand, .nav-brand { font-fam
   color: var(--hero-text); text-decoration: none; opacity: 0.9;
 }
 .resume-ok i { color: #34d399; }
+.resume-ok-wrap { display: inline-flex; align-items: center; gap: 6px; }
+.resume-remove {
+  display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0;
+  border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.16);
+  color: var(--hero-text); font-size: 13px; font-weight: 700; line-height: 1; cursor: pointer; transition: all 0.18s ease;
+}
+.resume-remove:hover { background: #ef4444; border-color: #ef4444; color: #fff; }
+.layout-minimal .resume-remove, .theme-minimal .resume-remove { color: var(--text); border-color: rgba(0, 0, 0, 0.2); background: rgba(0, 0, 0, 0.05); }
 .layout-minimal .resume-chip, .theme-minimal .resume-chip,
 .layout-minimal .resume-ok, .theme-minimal .resume-ok { color: var(--text); border-color: rgba(0,0,0,0.2); }
 .layout-minimal .resume-chip, .theme-minimal .resume-chip { background: rgba(0,0,0,0.05); }

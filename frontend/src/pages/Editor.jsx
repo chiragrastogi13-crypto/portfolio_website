@@ -281,9 +281,12 @@ export default function Editor() {
                   <i className="fas fa-link"></i> Link
                 </button>
                 {resumeSet && (
-                  <a className="resume-ok" href={data.resumeUrl} target="_blank" rel="noopener noreferrer" title={data.resumeUrl}>
-                    <i className="fas fa-circle-check"></i> CV attached
-                  </a>
+                  <span className="resume-ok-wrap">
+                    <a className="resume-ok" href={data.resumeUrl} target="_blank" rel="noopener noreferrer" title={data.resumeUrl}>
+                      <i className="fas fa-circle-check"></i> CV attached
+                    </a>
+                    <button type="button" className="resume-remove" title="Remove CV" onClick={() => touched((d) => { d.resumeUrl = ""; })}>×</button>
+                  </span>
                 )}
               </div>
               <div className="hero-socials mt-4">
