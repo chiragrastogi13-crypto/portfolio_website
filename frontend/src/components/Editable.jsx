@@ -22,6 +22,26 @@ export default function Editable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Paste as PLAIN TEXT only. Otherwise the browser drops the source's rich
+  // markup (fonts, colors, background highlights) into the field, so pasted
+  // content would look nothing like the rest of the portfolio. Stripping it to
+  // text makes pasted content inherit the portfolio's own font/background.
+  const onPaste = (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData)?.getData("text/plain") ?? "";
+    if (document.queryCommandSupported && document.queryCommandSupported("insertText")) {
+      document.execCommand("insertText", false, text);
+    } else {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount) {
+        sel.deleteFromDocument();
+        const range = sel.getRangeAt(0);
+        range.insertNode(document.createTextNode(text));
+        sel.collapseToEnd();
+      }
+    }
+  };
+
   const Tag = tag;
   return (
     <Tag
@@ -31,6 +51,7 @@ export default function Editable({
       contentEditable
       suppressContentEditableWarning
       data-placeholder={placeholder}
+      onPaste={onPaste}
       onBlur={(e) => onCommit(e.currentTarget.innerText.trim())}
     />
   );
