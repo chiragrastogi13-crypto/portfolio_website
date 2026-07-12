@@ -36,6 +36,14 @@ def _get_user(db: Session, user_id: int) -> models.User:
     return u
 
 
+@router.post("/cleanup-uploads")
+def cleanup_uploads(admin: models.User = Depends(auth.get_current_admin)):
+    """Manually run the orphaned-uploads sweep. Returns how many were removed."""
+    from ..cleanup import sweep_orphans
+
+    return {"removed": sweep_orphans()}
+
+
 @router.get("/stats", response_model=schemas.AdminStats)
 def stats(
     db: Session = Depends(get_db),

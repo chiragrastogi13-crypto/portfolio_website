@@ -101,6 +101,11 @@ try:
 finally:
     _db.close()
 
+# Periodically delete uploads no portfolio references anymore (freed storage).
+from .cleanup import start_background_cleanup
+
+start_background_cleanup()
+
 app = FastAPI(title="Website Lelo API")
 
 app.add_middleware(
