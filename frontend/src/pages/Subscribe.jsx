@@ -4,6 +4,7 @@ import { api } from "../api";
 import { useAuth } from "../auth.jsx";
 import { PLANS } from "../data.js";
 import PlanCard from "../components/PlanCard.jsx";
+import { PENDING_SAMPLE_KEY } from "../App.jsx";
 
 export default function Subscribe() {
   const { user, refresh } = useAuth();
@@ -27,6 +28,17 @@ export default function Subscribe() {
       .finally(() => setChecking(false));
   }, []);
 
+  // If the user already built a portfolio, "Own it" (or landing here) should
+  // just reopen THEIR portfolio with their own details — not re-subscribe or
+  // seed a sample over their work. Send them straight to the editor.
+  useEffect(() => {
+    if (user?.has_portfolio) {
+      localStorage.removeItem(PENDING_SAMPLE_KEY);
+      navigate("/editor", { replace: true });
+    }
+  }, [user, navigate]);
+
+  if (user?.has_portfolio) return <div className="text-center py-5">Opening your portfolio…</div>;
   if (checking) return <div className="text-center py-5">Loading…</div>;
 
   // Already paid & approved → straight to the editor.
