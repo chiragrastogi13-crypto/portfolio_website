@@ -131,6 +131,15 @@ class PortfolioUpdate(BaseModel):
     data: Dict[str, Any] = {}
 
 
+class UsernameUpdate(BaseModel):
+    username: str
+
+    @field_validator("username")
+    @classmethod
+    def _validate_username(cls, v: str) -> str:
+        return clean_username(v)
+
+
 class PortfolioOut(BaseModel):
     id: int
     username: str

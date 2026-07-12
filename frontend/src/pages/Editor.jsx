@@ -34,7 +34,9 @@ export default function Editor() {
   const [theme, setTheme] = useState(DEFAULT_DATA.theme);
   const [layout, setLayout] = useState(DEFAULT_DATA.layout);
   const [uname, setUname] = useState(null);
+  const [editingUrl, setEditingUrl] = useState(false);
   const debounce = useRef(null);
+  const urlSnapshot = useRef("");
 
   const patch = (fn) => setData((prev) => { const next = structuredClone(prev); fn(next); return next; });
   const touched = (fn) => { patch(fn); setSaved(false); };
@@ -119,6 +121,22 @@ export default function Editor() {
 
   const editUrl = (label, current, apply) => { const url = window.prompt(`${label}:`, current || ""); if (url !== null) touched(apply.bind(null, url.trim())); };
 
+  // --- Change the live URL slug (existing portfolios) ---
+  const startEditUrl = () => { urlSnapshot.current = username; setUname(null); setError(""); setEditingUrl(true); };
+  const cancelEditUrl = () => { setUsername(urlSnapshot.current); setUname(null); setError(""); setEditingUrl(false); };
+  const saveUsername = async () => {
+    setError("");
+    if (!username || username.length < 3) { setError("Username must be 3+ chars."); return; }
+    if (uname && !uname.available) { setError("That username isn't available."); return; }
+    if (username === urlSnapshot.current) { setEditingUrl(false); return; }
+    if (!window.confirm("Change your URL? Your old link will stop working.")) return;
+    setBusy(true);
+    try {
+      const updated = await api.changeUsername(username);
+      setUsername(updated.username); setUname(null); setEditingUrl(false); setSaved(true);
+    } catch (e) { setError(e.message); } finally { setBusy(false); }
+  };
+
   const persist = async () => {
     const clean = stripIds(data);
     if (isNew) {
@@ -159,16 +177,30 @@ export default function Editor() {
           <button className="btn btn-sm btn-outline-secondary" onClick={() => navigate("/")}><i className="fas fa-arrow-left me-1"></i> Exit</button>
           <div className="flex-grow-1 d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
             <span className="text-muted small">URL:</span>
-            {isNew ? (
+            {isNew || editingUrl ? (
               <div style={{ minWidth: 0, flex: "1 1 auto" }}>
-                <div className="input-group input-group-sm" style={{ maxWidth: 380, width: "100%" }}>
+                <div className="input-group input-group-sm" style={{ maxWidth: 460, width: "100%" }}>
                   {pathMode && <span className="input-group-text">{siteHost}/</span>}
-                  <input className="form-control" placeholder="your-name" value={username} onChange={(e) => onUsername(e.target.value)} />
+                  <input className="form-control" placeholder="your-name" value={username} onChange={(e) => onUsername(e.target.value)} autoFocus={editingUrl} />
                   {!pathMode && <span className="input-group-text">.{host}</span>}
+                  {editingUrl && (
+                    <>
+                      <button className="btn btn-success" onClick={saveUsername} disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+                      <button className="btn btn-outline-secondary" onClick={cancelEditUrl} disabled={busy}>Cancel</button>
+                    </>
+                  )}
                 </div>
                 {uname && <small className={uname.available ? "text-success" : "text-danger"}>{uname.available ? "✓ Available" : `✗ ${uname.reason || "Taken"}`}</small>}
+                {editingUrl && <small className="text-muted d-block">Changing your URL will break the old link.</small>}
               </div>
-            ) : <strong className="small">{pathMode ? `${siteHost}/${username}` : `${username}.${host}`}</strong>}
+            ) : (
+              <span className="small d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
+                <strong className="text-truncate">{pathMode ? `${siteHost}/${username}` : `${username}.${host}`}</strong>
+                <button className="btn btn-sm btn-link p-0 text-decoration-none" onClick={startEditUrl} title="Change your URL">
+                  <i className="fas fa-pen me-1"></i>Change
+                </button>
+              </span>
+            )}
           </div>
           <div className="d-flex align-items-center gap-1" title={`Layout (structure) · ${allowedLayouts.length} available on your plan`}>
             <i className="fas fa-table-cells-large text-muted"></i>

@@ -103,6 +103,38 @@ def update_portfolio(
     return _out(current.portfolio)
 
 
+@router.put("/portfolio/username", response_model=schemas.PortfolioOut)
+def change_username(
+    payload: schemas.UsernameUpdate,
+    db: Session = Depends(get_db),
+    current: models.User = Depends(auth.get_current_user),
+):
+    """Change the portfolio's URL slug. Same validation + per-namespace
+    uniqueness as creation. Note: this changes the public URL, so any old
+    link stops working.
+    """
+    if not current.portfolio:
+        raise HTTPException(status_code=404, detail="No portfolio to update")
+    new = payload.username  # already validated/cleaned
+    if new == current.portfolio.username:
+        return _out(current.portfolio)  # no change
+    taken = (
+        db.query(models.Portfolio)
+        .filter(
+            models.Portfolio.username == new,
+            models.Portfolio.url_kind == current.portfolio.url_kind,
+            models.Portfolio.id != current.portfolio.id,
+        )
+        .first()
+    )
+    if taken:
+        raise HTTPException(status_code=409, detail="That username is taken")
+    current.portfolio.username = new
+    db.commit()
+    db.refresh(current.portfolio)
+    return _out(current.portfolio)
+
+
 @router.post("/portfolio/generate", response_model=schemas.PortfolioOut)
 def generate_portfolio(
     db: Session = Depends(get_db),
@@ -165,15 +197,15 @@ def check_username(
     except ValueError as e:
         return {"available": False, "reason": str(e)}
     url_kind = plan_url_kind(current.plan)
-    taken = (
-        db.query(models.Portfolio)
-        .filter(
-            models.Portfolio.username == cleaned,
-            models.Portfolio.url_kind == url_kind,
-        )
-        .first()
+    q = db.query(models.Portfolio).filter(
+        models.Portfolio.username == cleaned,
+        models.Portfolio.url_kind == url_kind,
     )
-    return {"available": taken is None, "username": cleaned}
+    # Don't count the caller's own portfolio as a conflict (so they can re-check
+    # or keep their current name while editing).
+    if current.portfolio:
+        q = q.filter(models.Portfolio.id != current.portfolio.id)
+    return {"available": q.first() is None, "username": cleaned}
 
 
 # --- Showcase samples (public) ----------------------------------------------

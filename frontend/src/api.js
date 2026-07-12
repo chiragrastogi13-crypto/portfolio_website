@@ -66,6 +66,8 @@ export const api = {
   getPortfolio: () => request("/api/portfolio"),
   createPortfolio: (data) => request("/api/portfolio", { method: "POST", body: data }),
   updatePortfolio: (data) => request("/api/portfolio", { method: "PUT", body: data }),
+  changeUsername: (username) =>
+    request("/api/portfolio/username", { method: "PUT", body: { username } }),
   generate: () => request("/api/portfolio/generate", { method: "POST" }),
   checkUsername: (u) =>
     request(`/api/portfolio/check-username?username=${encodeURIComponent(u)}`),
