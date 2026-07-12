@@ -20,15 +20,21 @@ export const themeGradient = (id) => {
 // Subscribe flow. Edit freely.
 export const PLANS = [
   {
-    id: "starter", name: "Starter", price: 199, period: "one-time",
-    features: ["1 portfolio website", "All 20 layouts & 10 colors", "Image uploads", "Shareable live link"],
+    id: "starter", name: "Starter", price: 499, period: "1 year",
+    tagline: "Everything you need to launch",
+    domain: "wlelo.com/username",
+    features: ["All 10 layouts & 10 colors", "Image uploads", "Shareable live link"],
   },
   {
-    id: "professional", name: "Professional", price: 499, period: "one-time", popular: true,
-    features: ["Everything in Starter", "Interactive 3D design", "Custom section titles", "Priority rendering"],
+    id: "professional", name: "Professional", price: 999, period: "1 year", popular: true, badge: "Most Popular",
+    tagline: "For creators who want more",
+    domain: "username.wlelo.com",
+    features: ["All 20 layouts & 20 colors", "Interactive 3D design", "Custom section titles", "Priority rendering"],
   },
   {
-    id: "business", name: "Business", price: 999, period: "one-time",
+    id: "business", name: "Business", price: 1449, period: "1 year", badge: "Best Value",
+    tagline: "The complete package",
+    domain: "username.wlelo.com",
     features: ["Everything in Professional", "Premium support", "Early access to new designs", "Remove branding (soon)"],
   },
 ];

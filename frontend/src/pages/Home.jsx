@@ -7,6 +7,7 @@ import TiltCard from "../components/TiltCard.jsx";
 import Reveal from "../components/Reveal.jsx";
 import Counter from "../components/Counter.jsx";
 import Carousel from "../components/Carousel.jsx";
+import PlanCard from "../components/PlanCard.jsx";
 
 const themeLabel = (id) => (THEMES.find((t) => t.id === id) || THEMES[0]).label;
 
@@ -235,26 +236,14 @@ export default function Home() {
       <section className="container py-5" id="pricing">
         <Reveal as="div" className="text-center mb-5">
           <div className="eyebrow">Pricing</div>
-          <h2 className="mb-1">Simple, one-time pricing</h2>
-          <p className="text-muted">Pay once, no subscription. Pick a plan and unlock the portfolio editor.</p>
+          <h2 className="mb-1">Simple, yearly pricing</h2>
+          <p className="text-muted">One payment, a full year online. Pick a plan and unlock the portfolio editor.</p>
         </Reveal>
-        <div className="row g-4 justify-content-center">
+        <div className="row g-4 justify-content-center pricing-grid">
           {PLANS.map((p, i) => (
-            <div className="col-md-4" key={p.id}>
+            <div className="col-md-6 col-lg-4" key={p.id}>
               <Reveal delay={i * 100}>
-                <div className={`card h-100 border-0 shadow-sm ${p.popular ? "border-primary" : ""}`} style={p.popular ? { outline: "2px solid var(--primary-color)" } : {}}>
-                  <div className="card-body p-4 d-flex flex-column">
-                    {p.popular && <span className="badge text-bg-primary align-self-start mb-2">Most Popular</span>}
-                    <h3 className="h5 fw-bold">{p.name}</h3>
-                    <div className="my-2"><span className="display-6 fw-bold">₹{p.price}</span> <span className="text-muted">/ {p.period}</span></div>
-                    <ul className="list-unstyled my-3 flex-grow-1">
-                      {p.features.map((f) => <li key={f} className="mb-2"><i className="fas fa-check text-success me-2"></i>{f}</li>)}
-                    </ul>
-                    <button className={`btn ${p.popular ? "btn-primary" : "btn-outline-primary"} w-100`} onClick={startPlan}>
-                      Choose {p.name}
-                    </button>
-                  </div>
-                </div>
+                <PlanCard plan={p} onChoose={startPlan} />
               </Reveal>
             </div>
           ))}

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth.jsx";
 import { PLANS } from "../data.js";
+import PlanCard from "../components/PlanCard.jsx";
 
 export default function Subscribe() {
   const { user, refresh } = useAuth();
@@ -96,8 +97,8 @@ export default function Subscribe() {
       <main className="container py-5">
         <div className="text-center mb-5">
           <span className="badge rounded-pill text-bg-light">Step 2 · Choose a plan</span>
-          <h2 className="fw-bold mt-2">Simple, one-time pricing</h2>
-          <p className="text-muted">Pick a plan and pay securely via UPI to unlock the portfolio editor.</p>
+          <h2 className="fw-bold mt-2">Simple, yearly pricing</h2>
+          <p className="text-muted">One payment unlocks the editor for a full year. Pick a plan and pay securely via UPI.</p>
           {pstatus === "rejected" && (
             <div className="alert alert-warning d-inline-block text-start">
               <strong>Your previous payment couldn't be verified.</strong>
@@ -106,22 +107,10 @@ export default function Subscribe() {
             </div>
           )}
         </div>
-        <div className="row g-4 justify-content-center">
+        <div className="row g-4 justify-content-center pricing-grid">
           {PLANS.map((p) => (
-            <div className="col-md-4" key={p.id}>
-              <div className={`card h-100 border-0 shadow-sm ${p.popular ? "border-primary" : ""}`} style={p.popular ? { outline: "2px solid var(--primary-color)" } : {}}>
-                <div className="card-body p-4 d-flex flex-column">
-                  {p.popular && <span className="badge text-bg-primary align-self-start mb-2">Most Popular</span>}
-                  <h3 className="h5 fw-bold">{p.name}</h3>
-                  <div className="my-2"><span className="display-6 fw-bold">₹{p.price}</span> <span className="text-muted">/ {p.period}</span></div>
-                  <ul className="list-unstyled my-3 flex-grow-1">
-                    {p.features.map((f) => <li key={f} className="mb-2"><i className="fas fa-check text-success me-2"></i>{f}</li>)}
-                  </ul>
-                  <button className={`btn ${p.popular ? "btn-primary" : "btn-outline-primary"} w-100`} onClick={() => choose(p)}>
-                    Choose {p.name}
-                  </button>
-                </div>
-              </div>
+            <div className="col-md-6 col-lg-4" key={p.id}>
+              <PlanCard plan={p} onChoose={choose} />
             </div>
           ))}
         </div>
