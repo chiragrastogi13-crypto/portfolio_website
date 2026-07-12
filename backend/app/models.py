@@ -28,6 +28,9 @@ class User(Base):
 
     is_subscribed = Column(Boolean, default=False)
     subscribed_at = Column(DateTime, nullable=True)
+    # Purchased plan name ("Starter" | "Professional" | "Business"), set when an
+    # admin approves the payment. Decides template count + public URL shape.
+    plan = Column(String, default="")
 
     portfolio = relationship(
         "Portfolio", back_populates="owner", uselist=False, cascade="all, delete-orphan"

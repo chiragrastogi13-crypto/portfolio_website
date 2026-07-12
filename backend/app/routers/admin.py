@@ -24,7 +24,8 @@ def _user_out(u: models.User) -> schemas.AdminUserOut:
         has_portfolio=p is not None,
         created_at=u.created_at,
         portfolio_username=p.username if p else "",
-        portfolio_url=public_portfolio_url(p.username) if (p and p.is_published) else "",
+        portfolio_url=public_portfolio_url(p.username, u.plan) if (p and p.is_published) else "",
+        plan=u.plan or "",
     )
 
 
@@ -138,6 +139,8 @@ def approve_payment(
     payment.status = "approved"
     if payment.user:                 # unlock the editor for that user
         payment.user.is_subscribed = True
+        # Record the purchased plan — decides template count + public URL shape.
+        payment.user.plan = payment.plan or payment.user.plan
         background_tasks.add_task(
             send_email,
             payment.user.email,

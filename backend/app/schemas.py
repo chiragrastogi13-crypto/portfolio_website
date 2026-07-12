@@ -56,6 +56,10 @@ class UserOut(BaseModel):
     has_portfolio: bool = False
     status: str = "pending"
     is_admin: bool = False
+    # Plan-derived entitlements (drive the editor gating + URL preview).
+    plan: str = ""
+    template_limit: int = 20
+    subdomain: bool = False
 
 
 class AdminUserOut(BaseModel):
@@ -68,6 +72,7 @@ class AdminUserOut(BaseModel):
     created_at: datetime
     portfolio_username: str = ""
     portfolio_url: str = ""
+    plan: str = ""
 
 
 class AdminStats(BaseModel):

@@ -95,13 +95,57 @@ PUBLIC_BASE_URL = _public_base_url()
 FRONTEND_URL = FRONTEND_ORIGINS[0].strip() if FRONTEND_ORIGINS else PUBLIC_BASE_URL
 
 
-def public_portfolio_url(username: str) -> str:
-    """Build the public URL a client receives after generating their portfolio."""
+# --- Plan tiers -------------------------------------------------------------
+# What each purchased plan unlocks. The plan *name* (as shown on the pricing
+# cards: "Starter" / "Professional" / "Business") is stored on the user when an
+# admin approves their payment.
+#
+#   Starter (₹499)         -> 10 layouts, path URL   (wlelo.com/<user>)
+#   Professional (₹999)    -> 20 layouts, subdomain  (<user>.wlelo.com)
+#   Business (₹1449)       -> 20 layouts, subdomain  (<user>.wlelo.com)
+#
+# Keep TEMPLATES_PRO in sync with the number of layouts in frontend/src/data.js.
+TEMPLATES_BASIC = 10
+TEMPLATES_PRO = 20
+_SUBDOMAIN_TIERS = ("professional", "business")
+
+
+def plan_tier(plan: str) -> str:
+    """Normalise a stored plan name to a known tier, or '' if unknown/empty."""
+    p = (plan or "").strip().lower()
+    if p in _SUBDOMAIN_TIERS or p == "starter":
+        return p
+    return ""
+
+
+def plan_template_limit(plan: str) -> int:
+    """How many layouts the editor should offer for this plan."""
+    return TEMPLATES_BASIC if plan_tier(plan) == "starter" else TEMPLATES_PRO
+
+
+def plan_uses_subdomain(plan: str) -> bool:
+    """True -> <user>.<host> ; False -> <host>/<user>.
+
+    For a known tier the plan decides. For an unknown/empty plan (legacy users,
+    admin) we fall back to the global USE_PATH_URLS deployment flag.
+    """
+    tier = plan_tier(plan)
+    if tier:
+        return tier in _SUBDOMAIN_TIERS
+    return not USE_PATH_URLS
+
+
+def public_portfolio_url(username: str, plan: str | None = None) -> str:
+    """Build the public URL a client receives after generating their portfolio.
+
+    The URL shape depends on the owner's plan (subdomain vs path). Pass the
+    owner's plan; when omitted/unknown it falls back to the deployment default.
+    """
     scheme = "https" if BASE_PORT == 443 else "http"
     port_part = "" if BASE_PORT in (80, 443) else f":{BASE_PORT}"
-    if USE_PATH_URLS:
-        # Root-level path (wlelo.com/<user>); a proxy rewrites it to the
-        # backend's /p/<user> route. Cleaner than exposing /p/ in the link.
-        return f"{scheme}://{BASE_HOST}{port_part}/{username}"
-    # Subdomain form (chirag.wlelo.com) — used on the Oracle VM + Caddy setup.
-    return f"{scheme}://{username}.{BASE_HOST}{port_part}"
+    if plan_uses_subdomain(plan):
+        # Subdomain form (chirag.wlelo.com) — Professional/Business.
+        return f"{scheme}://{username}.{BASE_HOST}{port_part}"
+    # Root-level path (wlelo.com/<user>) — Starter. A proxy rewrites it to the
+    # backend's /p/<user> route. Cleaner than exposing /p/ in the link.
+    return f"{scheme}://{BASE_HOST}{port_part}/{username}"

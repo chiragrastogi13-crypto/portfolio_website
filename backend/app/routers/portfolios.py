@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from .. import auth, images, models, schemas
+from . import auth as auth_router
 from ..config import PUBLIC_BASE_URL, public_portfolio_url
 from ..database import get_db
 
@@ -19,7 +20,8 @@ router = APIRouter(prefix="/api", tags=["portfolio"])
 
 
 def _out(p: models.Portfolio) -> schemas.PortfolioOut:
-    return schemas.PortfolioOut.from_model(p, public_portfolio_url(p.username))
+    plan = p.owner.plan if p.owner else ""
+    return schemas.PortfolioOut.from_model(p, public_portfolio_url(p.username, plan))
 
 
 # --- Subscription gate ------------------------------------------------------
@@ -35,14 +37,7 @@ def subscribe(
     current.subscribed_at = datetime.utcnow()
     db.commit()
     db.refresh(current)
-    return schemas.UserOut(
-        id=current.id,
-        email=current.email,
-        is_subscribed=current.is_subscribed,
-        has_portfolio=current.portfolio is not None,
-        status=current.status,
-        is_admin=current.is_admin,
-    )
+    return auth_router.user_out(current)
 
 
 # --- Portfolio CRUD ---------------------------------------------------------

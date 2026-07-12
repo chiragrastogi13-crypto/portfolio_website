@@ -91,6 +91,18 @@ export default function Editor() {
   const pickTheme = (id) => { setTheme(id); touched((d) => { d.theme = id; }); };
   const pickLayout = (id) => { setLayout(id); touched((d) => { d.layout = id; }); };
 
+  // Plan gating: Starter unlocks the first 10 layouts, Professional/Business all
+  // 20. The limit comes from the backend (/me). Colors stay available to all.
+  const templateLimit = user?.template_limit ?? LAYOUTS.length;
+  const allowedLayouts = LAYOUTS.slice(0, templateLimit);
+
+  // If a saved/selected layout is above the plan's limit, fall back to the first
+  // allowed one so a Starter user can't sit on a locked design.
+  useEffect(() => {
+    if (loading || !allowedLayouts.length) return;
+    if (!allowedLayouts.some((l) => l.id === layout)) pickLayout(allowedLayouts[0].id);
+  }, [templateLimit, layout, loading]);
+
   // Mark the body so the immersive 3D tilt becomes an edit-safe lift while editing.
   useEffect(() => {
     document.body.classList.add("editing");
@@ -126,13 +138,14 @@ export default function Editor() {
     catch (e) { setError(e.message); } finally { setBusy(false); }
   };
 
-  // Public URL preview. In production the site is path-based, so set
-  // VITE_PUBLIC_SITE (e.g. https://wlelo.com) and we show wlelo.com/p/<user>.
-  // Locally, with no VITE_PUBLIC_SITE, we fall back to the subdomain form
-  // derived from the API base (nip.io wildcard) -> <user>.127.0.0.1.nip.io:8000.
+  // Public URL preview. The *shape* now follows the user's plan:
+  //   Starter          -> wlelo.com/<user>        (path)
+  //   Professional/Biz -> <user>.wlelo.com        (subdomain)
+  // The base host comes from VITE_PUBLIC_SITE (prod, e.g. https://wlelo.com) or
+  // falls back to the API host (nip.io wildcard) so subdomains work locally.
   const host = (() => { try { return new URL(api.base).host; } catch { return "127.0.0.1.nip.io:8000"; } })();
   const pubSite = import.meta.env.VITE_PUBLIC_SITE;
-  const pathMode = !!pubSite;
+  const pathMode = !user?.subdomain;
   const siteHost = pubSite ? (() => { try { return new URL(pubSite).host; } catch { return pubSite; } })() : host;
   if (loading) return <div className="text-center py-5">Loading editor…</div>;
 
@@ -157,10 +170,10 @@ export default function Editor() {
               </div>
             ) : <strong className="small">{pathMode ? `${siteHost}/${username}` : `${username}.${host}`}</strong>}
           </div>
-          <div className="d-flex align-items-center gap-1" title="Layout (structure)">
+          <div className="d-flex align-items-center gap-1" title={`Layout (structure) · ${allowedLayouts.length} available on your plan`}>
             <i className="fas fa-table-cells-large text-muted"></i>
             <select className="form-select form-select-sm" style={{ width: 120 }} value={layout} onChange={(e) => pickLayout(e.target.value)}>
-              {LAYOUTS.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}
+              {allowedLayouts.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}
             </select>
           </div>
           <div className="d-flex align-items-center gap-1" title="Color design">

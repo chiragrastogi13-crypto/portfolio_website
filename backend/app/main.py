@@ -31,6 +31,24 @@ from .routers import requirements as requirements_router
 Base.metadata.create_all(bind=engine)
 
 
+def _ensure_user_columns():
+    """Add columns introduced after the DB was first created (lightweight migration).
+
+    create_all() never ALTERs existing tables, so a DB seeded before `plan` was
+    added would 500 on every user query. Add it in place if missing.
+    """
+    from sqlalchemy import inspect, text
+
+    insp = inspect(engine)
+    existing = {c["name"] for c in insp.get_columns("users")}
+    if "plan" not in existing:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR DEFAULT ''"))
+
+
+_ensure_user_columns()
+
+
 def _ensure_admin():
     """Create the admin account on first run if it doesn't exist."""
     from .auth import hash_password

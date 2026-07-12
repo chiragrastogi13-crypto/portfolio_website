@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
+from ..config import plan_template_limit, plan_uses_subdomain
 from ..database import get_db
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -54,4 +55,7 @@ def user_out(u: models.User) -> schemas.UserOut:
         has_portfolio=u.portfolio is not None,
         status=u.status,
         is_admin=u.is_admin,
+        plan=u.plan or "",
+        template_limit=plan_template_limit(u.plan),
+        subdomain=plan_uses_subdomain(u.plan),
     )
