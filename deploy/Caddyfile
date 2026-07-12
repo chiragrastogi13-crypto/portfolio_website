@@ -25,6 +25,20 @@ wlelo.com, www.wlelo.com {
 		reverse_proxy 127.0.0.1:8000
 	}
 
+	# Starter-plan portfolios live at the clean root path: wlelo.com/<username>.
+	# Match a single username-shaped segment (3–32 chars, no dot, so asset files
+	# like /logo.png and nested /assets/* are excluded) that isn't one of the SPA
+	# routes, and hand it to the backend's /p/<username> renderer. These SPA names
+	# are reserved usernames in the app, so there's no collision.
+	@portfolio {
+		path_regexp uname ^/([a-z0-9][a-z0-9-]{1,30}[a-z0-9])/?$
+		not path /samples /hire /login /register /subscribe /editor /result /admin
+	}
+	handle @portfolio {
+		rewrite * /p/{re.uname.1}
+		reverse_proxy 127.0.0.1:8000
+	}
+
 	# Everything else is the built React app (Vite `dist/`). SPA fallback to
 	# index.html so client-side routes (/editor, /admin, ...) work on refresh.
 	handle {
