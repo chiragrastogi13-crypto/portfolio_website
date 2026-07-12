@@ -249,9 +249,17 @@ export default function Editor() {
               </div>
               <div className="hero-socials mt-4">
                 {SOCIAL_KEYS.filter((k) => k in data.socials).map((k) => (
-                  <a key={k} title={`Edit ${k}`} onClick={() => editUrl(`${k} URL`, data.socials[k], (url) => (d) => { d.socials[k] = url; })}>
+                  <span key={k} className="social-edit-item">
+                    <a title={`Edit ${k} URL`} onClick={() => editUrl(`${k} URL`, data.socials[k], (url) => (d) => { d.socials[k] = url; })}>
+                      <i className={`fab ${SOCIAL_ICONS[k]}`}></i>
+                    </a>
+                    <button type="button" className="social-remove" title={`Remove ${k}`} onClick={() => touched((d) => { delete d.socials[k]; })}>×</button>
+                  </span>
+                ))}
+                {SOCIAL_KEYS.filter((k) => !(k in data.socials)).map((k) => (
+                  <button key={k} type="button" className="social-add" title={`Add ${k}`} onClick={() => touched((d) => { d.socials[k] = "#"; })}>
                     <i className={`fab ${SOCIAL_ICONS[k]}`}></i>
-                  </a>
+                  </button>
                 ))}
               </div>
             </div>

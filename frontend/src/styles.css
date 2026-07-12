@@ -169,6 +169,22 @@ h1, h2, h3, h4, h5, h6, .head h2, .hero h1, .navbar-brand, .nav-brand { font-fam
 .hero-socials a { color: var(--hero-text); font-size: 1.3rem; margin-right: 16px; transition: all 0.25s; display: inline-block; cursor: pointer; }
 .hero-socials a:hover { transform: translateY(-4px); color: var(--accent-color); }
 
+/* Editor-only: remove a social icon you don't use, or add a missing one. */
+.social-edit-item { position: relative; display: inline-block; }
+.social-edit-item .social-remove {
+  position: absolute; top: -9px; right: 6px; width: 18px; height: 18px; padding: 0;
+  line-height: 16px; border-radius: 50%; border: none; background: #ef4444; color: #fff;
+  font-size: 12px; font-weight: 700; cursor: pointer; opacity: 0; transition: opacity .15s; z-index: 4;
+}
+.social-edit-item:hover .social-remove { opacity: 1; }
+.hero-socials .social-add {
+  width: 34px; height: 34px; margin-right: 12px; border-radius: 50%;
+  border: 1px dashed var(--hero-text); background: transparent; color: var(--hero-text);
+  font-size: 1rem; line-height: 1; cursor: pointer; opacity: 0.45; transition: all .2s; vertical-align: middle;
+}
+.hero-socials .social-add:hover { opacity: 1; transform: translateY(-3px); }
+.layout-minimal .hero-socials .social-add, .theme-minimal .hero-socials .social-add { color: var(--text); border-color: var(--text); }
+
 /* Stats */
 .stats-strip { margin-top: -50px; position: relative; z-index: 5; }
 .stat-card { background: var(--card-bg); border-radius: var(--radius); padding: 26px 18px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.06); transition: all 0.3s ease; height: 100%; }
