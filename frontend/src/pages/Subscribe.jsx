@@ -225,7 +225,7 @@ export default function Subscribe() {
                           className="form-control"
                           value={promo}
                           onChange={(e) => { setPromo(e.target.value.toUpperCase()); setPromoErr(""); }}
-                          placeholder="e.g. WLELO3M"
+                          placeholder="e.g. PROMO"
                           autoCapitalize="characters"
                           disabled={promoBusy}
                         />
