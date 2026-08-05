@@ -57,7 +57,7 @@ def claim_payment(
     """User says 'I've paid'. Creates a pending payment for admin review and
     emails the admin. The account is NOT unlocked here — an admin must approve.
     """
-    if current.is_subscribed:
+    if auth.has_active_subscription(current):
         return schemas.PaymentMyStatus(status="approved", plan=payload.plan, amount=payload.amount)
 
     payment = models.Payment(
@@ -91,7 +91,7 @@ def my_payment_status(
     current: models.User = Depends(auth.get_current_user),
 ):
     """Latest payment status for the logged-in user (drives the UI)."""
-    if current.is_subscribed:
+    if auth.has_active_subscription(current):
         return schemas.PaymentMyStatus(status="approved")
     latest = (
         db.query(models.Payment)

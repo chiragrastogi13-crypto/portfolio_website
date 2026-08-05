@@ -59,10 +59,13 @@ def create_portfolio(
     db: Session = Depends(get_db),
     current: models.User = Depends(auth.get_current_user),
 ):
-    if not current.is_subscribed:
-        raise HTTPException(
-            status_code=402, detail="Subscription required before creating a portfolio"
+    if not auth.has_active_subscription(current):
+        detail = (
+            "Your subscription has expired. Please renew to continue."
+            if auth.subscription_expired(current)
+            else "Subscription required before creating a portfolio"
         )
+        raise HTTPException(status_code=402, detail=detail)
     if current.portfolio:
         raise HTTPException(status_code=400, detail="You already have a portfolio")
 
@@ -144,6 +147,11 @@ def generate_portfolio(
     """Publish the portfolio and hand back the live link."""
     if not current.portfolio:
         raise HTTPException(status_code=404, detail="No portfolio to publish")
+    if not auth.has_active_subscription(current):
+        raise HTTPException(
+            status_code=402,
+            detail="Your subscription has expired. Please renew to publish your portfolio.",
+        )
     current.portfolio.is_published = True
     db.commit()
     db.refresh(current.portfolio)

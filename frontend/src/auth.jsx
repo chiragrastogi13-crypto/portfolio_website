@@ -34,8 +34,8 @@ export function AuthProvider({ children }) {
     setToken(access_token);
     await refresh();
   };
-  const register = async (email, password) => {
-    const { access_token } = await api.register(email, password);
+  const register = async (email, password, promo_code = "") => {
+    const { access_token } = await api.register(email, password, promo_code);
     setToken(access_token);
     await refresh();
   };

@@ -37,6 +37,7 @@ def clean_username(v: str) -> str:
 class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6, max_length=128)
+    promo_code: str = Field(default="", max_length=40)
 
 
 class UserLogin(BaseModel):
@@ -60,6 +61,8 @@ class UserOut(BaseModel):
     plan: str = ""
     template_limit: int = 20
     subdomain: bool = False
+    subscription_expires_at: datetime | None = None
+    subscription_expired: bool = False
 
 
 class AdminUserOut(BaseModel):

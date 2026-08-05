@@ -28,9 +28,17 @@ class User(Base):
 
     is_subscribed = Column(Boolean, default=False)
     subscribed_at = Column(DateTime, nullable=True)
+    # When the current subscription ends. NULL means "no expiry tracked" (legacy
+    # admin/pre-migration users are treated as active). After this timestamp the
+    # public portfolio page shows a "subscription expired" screen and the editor
+    # blocks create/publish until the user renews.
+    subscription_expires_at = Column(DateTime, nullable=True)
     # Purchased plan name ("Starter" | "Professional" | "Business"), set when an
     # admin approves the payment. Decides template count + public URL shape.
     plan = Column(String, default="")
+    # Promo code the user redeemed at signup (e.g. WLELO3M for 3 months free
+    # Starter). Stored so one account can't reuse the same code twice.
+    promo_code_used = Column(String, default="")
 
     portfolio = relationship(
         "Portfolio", back_populates="owner", uselist=False, cascade="all, delete-orphan"

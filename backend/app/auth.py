@@ -88,3 +88,26 @@ def get_current_admin(current: models.User = Depends(get_current_user)) -> model
     if not current.is_admin:
         raise HTTPException(status_code=403, detail="Admin access only")
     return current
+
+
+def subscription_expired(user: models.User) -> bool:
+    """True when the user had a subscription that has now lapsed.
+
+    Admins and users with no expiry set (legacy pre-migration accounts) are
+    treated as always active.
+    """
+    if user is None or user.is_admin:
+        return False
+    exp = getattr(user, "subscription_expires_at", None)
+    if exp is None:
+        return False
+    return exp < datetime.utcnow()
+
+
+def has_active_subscription(user: models.User) -> bool:
+    """Editor gate: user has paid AND their subscription hasn't lapsed."""
+    if user is None:
+        return False
+    if not user.is_subscribed:
+        return False
+    return not subscription_expired(user)

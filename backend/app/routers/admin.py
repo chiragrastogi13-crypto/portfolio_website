@@ -2,11 +2,13 @@
 
 All routes require an admin account (see config.ADMIN_EMAIL).
 """
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
-from ..config import portfolio_url
+from ..config import PAID_SUBSCRIPTION_DAYS, portfolio_url
 from ..database import get_db
 from ..mailer import send_email
 
@@ -146,7 +148,14 @@ def approve_payment(
         raise HTTPException(status_code=404, detail="Payment not found")
     payment.status = "approved"
     if payment.user:                 # unlock the editor for that user
+        now = datetime.utcnow()
         payment.user.is_subscribed = True
+        payment.user.subscribed_at = now
+        # Extend from existing expiry if still in the future (so paying early
+        # doesn't lose remaining days); otherwise start fresh from today.
+        current_exp = payment.user.subscription_expires_at
+        base = current_exp if (current_exp and current_exp > now) else now
+        payment.user.subscription_expires_at = base + timedelta(days=PAID_SUBSCRIPTION_DAYS)
         # Record the purchased plan — decides template count + public URL shape.
         payment.user.plan = payment.plan or payment.user.plan
         background_tasks.add_task(

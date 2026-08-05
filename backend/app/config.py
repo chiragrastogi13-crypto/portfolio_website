@@ -111,6 +111,23 @@ TEMPLATES_BASIC = 10
 TEMPLATES_PRO = 20
 _SUBDOMAIN_TIERS = ("professional", "business")
 
+# --- Signup promo codes -----------------------------------------------------
+# code -> (plan_name, free_months). Redeemable ONCE at register-time; the user
+# gets the plan unlocked immediately with an auto-expiry `free_months` from now.
+SIGNUP_PROMO_CODES: dict[str, tuple[str, int]] = {
+    "WLELO3M": ("Starter", 3),
+}
+
+# How long a paid subscription lasts after admin approval, in days.
+PAID_SUBSCRIPTION_DAYS = int(os.getenv("PAID_SUBSCRIPTION_DAYS", "365"))
+
+
+def lookup_promo(code: str) -> tuple[str, int] | None:
+    """Case-insensitive promo lookup. Returns (plan_name, free_months) or None."""
+    if not code:
+        return None
+    return SIGNUP_PROMO_CODES.get(code.strip().upper())
+
 
 def plan_tier(plan: str) -> str:
     """Normalise a stored plan name to a known tier, or '' if unknown/empty."""

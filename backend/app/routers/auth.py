@@ -1,9 +1,11 @@
 """Auth routes: register, login, and current-user info."""
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
-from ..config import plan_template_limit, plan_uses_subdomain
+from ..config import lookup_promo, plan_template_limit, plan_uses_subdomain
 from ..database import get_db
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -15,6 +17,11 @@ def register(payload: schemas.UserCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    code = (payload.promo_code or "").strip()
+    promo = lookup_promo(code) if code else None
+    if code and not promo:
+        raise HTTPException(status_code=400, detail="Invalid promo code")
+
     # New accounts are auto-approved so users can start right away. An admin can
     # still disapprove (block) an account later from the admin panel.
     user = models.User(
@@ -22,6 +29,14 @@ def register(payload: schemas.UserCreate, db: Session = Depends(get_db)):
         hashed_password=auth.hash_password(payload.password),
         status="approved",
     )
+    if promo:
+        plan_name, free_months = promo
+        now = datetime.utcnow()
+        user.is_subscribed = True
+        user.subscribed_at = now
+        user.subscription_expires_at = now + timedelta(days=30 * free_months)
+        user.plan = plan_name
+        user.promo_code_used = code.upper()
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -48,14 +63,17 @@ def me(current: models.User = Depends(auth.get_current_user)):
 
 def user_out(u: models.User) -> schemas.UserOut:
     """Build the UserOut payload (shared by /me and /subscribe)."""
+    expired = auth.subscription_expired(u)
     return schemas.UserOut(
         id=u.id,
         email=u.email,
-        is_subscribed=u.is_subscribed,
+        is_subscribed=u.is_subscribed and not expired,
         has_portfolio=u.portfolio is not None,
         status=u.status,
         is_admin=u.is_admin,
         plan=u.plan or "",
         template_limit=plan_template_limit(u.plan),
         subdomain=plan_uses_subdomain(u.plan),
+        subscription_expires_at=u.subscription_expires_at,
+        subscription_expired=expired,
     )

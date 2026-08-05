@@ -41,10 +41,20 @@ def _ensure_schema():
 
     insp = inspect(engine)
 
+    user_cols = {c["name"] for c in insp.get_columns("users")}
+
     # users.plan — the purchased plan name (drives templates + URL shape).
-    if "plan" not in {c["name"] for c in insp.get_columns("users")}:
+    if "plan" not in user_cols:
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR DEFAULT ''"))
+
+    if "subscription_expires_at" not in user_cols:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN subscription_expires_at DATETIME"))
+
+    if "promo_code_used" not in user_cols:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN promo_code_used VARCHAR DEFAULT ''"))
 
     # portfolios.url_kind — the URL namespace ('path' | 'subdomain'). Usernames
     # are unique per-namespace, so the old global-unique index on username is
@@ -175,6 +185,10 @@ def _render_portfolio(request: Request, username: str, url_kind: str) -> HTMLRes
             return HTMLResponse(
                 _not_found_html(username), status_code=404
             )
+        from .auth import subscription_expired
+
+        if p.owner and subscription_expired(p.owner):
+            return HTMLResponse(_expired_html(username), status_code=402)
         return templates.TemplateResponse(
             "portfolio.html",
             {
@@ -200,6 +214,27 @@ a{{color:#818cf8}}</style></head>
 <body><div><h1>No portfolio at "{username}"</h1>
 <p>This portfolio doesn't exist or hasn't been published yet.</p>
 <p><a href="{FRONTEND_URL}">← Back to Website Lelo</a></p>
+</div></body></html>"""
+
+
+def _expired_html(username: str) -> str:
+    return f"""<!DOCTYPE html><html><head><meta charset='utf-8'>
+<title>Subscription expired</title>
+<style>body{{font-family:system-ui;background:#0f172a;color:#f1f5f9;display:flex;
+align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;padding:24px}}
+.card{{max-width:520px}}
+h1{{margin:0 0 12px;font-size:1.6rem}}
+p{{color:#cbd5e1;line-height:1.55}}
+a.btn{{display:inline-block;margin-top:18px;padding:12px 22px;border-radius:10px;
+background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;text-decoration:none;font-weight:600}}
+a.muted{{color:#818cf8;display:block;margin-top:14px;text-decoration:none}}</style></head>
+<body><div class="card">
+<div style="font-size:3rem">⏳</div>
+<h1>This portfolio is currently unavailable</h1>
+<p>The subscription for <strong>{username}</strong> has expired.
+Please renew your plan to bring this page back online.</p>
+<a class="btn" href="{FRONTEND_URL}/subscribe">Renew subscription →</a>
+<a class="muted" href="{FRONTEND_URL}">← Back to Website Lelo</a>
 </div></body></html>"""
 
 
