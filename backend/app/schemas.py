@@ -37,7 +37,6 @@ def clean_username(v: str) -> str:
 class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6, max_length=128)
-    promo_code: str = Field(default="", max_length=40)
 
 
 class UserLogin(BaseModel):
@@ -93,6 +92,20 @@ class PaymentClaim(BaseModel):
     plan: str = ""
     amount: int = 0
     reference: str = ""
+    promo_code: str = Field(default="", max_length=40)
+
+
+class PromoValidateIn(BaseModel):
+    code: str = Field(min_length=1, max_length=40)
+    plan: str = ""
+
+
+class PromoValidateOut(BaseModel):
+    valid: bool
+    plan: str = ""
+    months: int = 0
+    discounted_amount: int = 0
+    message: str = ""
 
 
 class RejectIn(BaseModel):

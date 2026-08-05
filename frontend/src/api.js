@@ -57,8 +57,8 @@ export const api = {
   uploadImage,
   uploadResume: (file) => uploadTo("/api/upload/resume", file),
   // auth
-  register: (email, password, promo_code = "") =>
-    request("/api/auth/register", { method: "POST", body: { email, password, promo_code }, auth: false }),
+  register: (email, password) =>
+    request("/api/auth/register", { method: "POST", body: { email, password }, auth: false }),
   login: (email, password) =>
     request("/api/auth/login", { method: "POST", body: { email, password }, auth: false }),
   me: () => request("/api/auth/me"),
@@ -78,8 +78,10 @@ export const api = {
   sampleData: (slug) => request(`/api/samples/${encodeURIComponent(slug)}`, { auth: false }),
   // payment
   paymentInfo: () => request("/api/payment/info", { auth: false }),
-  claimPayment: (plan, amount, reference) =>
-    request("/api/payment/claim", { method: "POST", body: { plan, amount, reference } }),
+  validatePromo: (code, plan) =>
+    request("/api/payment/promo/validate", { method: "POST", body: { code, plan } }),
+  claimPayment: (plan, amount, reference, promo_code = "") =>
+    request("/api/payment/claim", { method: "POST", body: { plan, amount, reference, promo_code } }),
   myPaymentStatus: () => request("/api/payment/my-status"),
   // admin
   adminStats: () => request("/api/admin/stats"),

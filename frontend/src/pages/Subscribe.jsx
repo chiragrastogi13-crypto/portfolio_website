@@ -18,6 +18,11 @@ export default function Subscribe() {
   const [pstatus, setPstatus] = useState(null); // none | pending | approved | rejected
   const [preason, setPreason] = useState("");
   const [checking, setChecking] = useState(true);
+  const [showPromo, setShowPromo] = useState(false);
+  const [promo, setPromo] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState(null); // {code, plan, months, discounted_amount, message}
+  const [promoErr, setPromoErr] = useState("");
+  const [promoBusy, setPromoBusy] = useState(false);
 
   useEffect(() => { api.paymentInfo().then(setUpi).catch(() => {}); }, []);
   useEffect(() => {
@@ -74,28 +79,52 @@ export default function Subscribe() {
     );
   }
 
-  const choose = (p) => { setPlan(p); setStep("pay"); setError(""); };
+  const resetPromo = () => {
+    setPromo(""); setAppliedPromo(null); setPromoErr(""); setShowPromo(false);
+  };
+
+  const choose = (p) => { setPlan(p); setStep("pay"); setError(""); resetPromo(); };
+  const backToPlans = () => { setStep("plans"); resetPromo(); };
+
+  const effectiveAmount = appliedPromo ? appliedPromo.discounted_amount : (plan?.price ?? 0);
 
   const upiUri = () => {
     if (!upi || !plan) return "#";
     const q = new URLSearchParams({
-      pa: upi.vpa, pn: upi.name, am: String(plan.price), cu: "INR",
+      pa: upi.vpa, pn: upi.name, am: String(effectiveAmount), cu: "INR",
       tn: `Website Lelo - ${plan.name}`,
     });
     return `upi://pay?${q.toString()}`;
   };
 
-  const qrSrc = plan ? `${api.base}/api/payment/qr?amount=${plan.price}&note=${encodeURIComponent("Website Lelo - " + plan.name)}` : "";
+  const qrSrc = plan ? `${api.base}/api/payment/qr?amount=${effectiveAmount}&note=${encodeURIComponent("Website Lelo - " + plan.name)}` : "";
 
   const copyVpa = async () => {
     try { await navigator.clipboard.writeText(upi.vpa); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch (_) {}
+  };
+
+  const applyPromo = async () => {
+    const code = promo.trim().toUpperCase();
+    if (!code) { setPromoErr("Please enter a code."); return; }
+    setPromoBusy(true); setPromoErr("");
+    try {
+      const res = await api.validatePromo(code, plan.name);
+      setAppliedPromo({ ...res, code });
+    } catch (e) {
+      setPromoErr(e.message || "Invalid promo code");
+      setAppliedPromo(null);
+    } finally { setPromoBusy(false); }
+  };
+
+  const removePromo = () => {
+    setAppliedPromo(null); setPromo(""); setPromoErr("");
   };
 
   const confirmPaid = async () => {
     setBusy(true); setError("");
     try {
       // Submit a payment claim for admin verification (not unlocked yet).
-      await api.claimPayment(plan.name, plan.price, ref);
+      await api.claimPayment(plan.name, effectiveAmount, ref, appliedPromo?.code || "");
       setPstatus("pending");
     } catch (e) { setError(e.message); }
     finally { setBusy(false); }
@@ -133,11 +162,31 @@ export default function Subscribe() {
     <div className="container" style={{ maxWidth: 720 }}>
       <div className="card border-0 shadow-sm my-5">
         <div className="card-body p-4 p-md-5">
-          <button className="btn btn-sm btn-link text-decoration-none px-0 mb-2" onClick={() => setStep("plans")}>
+          <button className="btn btn-sm btn-link text-decoration-none px-0 mb-2" onClick={backToPlans}>
             <i className="fas fa-arrow-left me-1"></i> Back to plans
           </button>
-          <h2 className="h4 fw-bold">Pay ₹{plan.price} via UPI</h2>
+          <h2 className="h4 fw-bold">
+            Pay ₹{effectiveAmount}
+            {appliedPromo && (
+              <span className="text-muted fw-normal ms-2" style={{ textDecoration: "line-through", fontSize: "1rem" }}>
+                ₹{plan.price}
+              </span>
+            )}
+            {" "}via UPI
+          </h2>
           <p className="text-muted">Plan: <strong>{plan.name}</strong> · Scan the QR with any UPI app (GPay, PhonePe, Paytm…) or use the UPI ID below.</p>
+
+          {appliedPromo && (
+            <div className="alert alert-success d-flex align-items-start justify-content-between py-2">
+              <div>
+                <strong>🎉 Promo applied: {appliedPromo.code}</strong>
+                <div className="small">{appliedPromo.message}</div>
+              </div>
+              <button type="button" className="btn btn-sm btn-link text-decoration-none p-0 ms-2" onClick={removePromo}>
+                Remove
+              </button>
+            </div>
+          )}
 
           {error && <div className="alert alert-danger py-2">{error}</div>}
 
@@ -146,7 +195,7 @@ export default function Subscribe() {
               <div className="p-3 bg-white d-inline-block rounded shadow-sm" style={{ border: "1px solid var(--border, #e5e7eb)" }}>
                 <img src={qrSrc} alt="UPI QR code" width="220" height="220" style={{ display: "block" }} />
               </div>
-              <div className="text-muted small mt-2">Scan to pay ₹{plan.price}</div>
+              <div className="text-muted small mt-2">Scan to pay ₹{effectiveAmount}</div>
             </div>
 
             <div className="col-md-7">
@@ -158,11 +207,43 @@ export default function Subscribe() {
 
               <a href={upiUri()} className="btn btn-primary w-100 mb-3"><i className="fas fa-mobile-screen me-2"></i>Open in UPI app</a>
 
+              {!appliedPromo && (
+                <div className="mb-3">
+                  {!showPromo ? (
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 small text-decoration-none"
+                      onClick={() => setShowPromo(true)}
+                    >
+                      Have a promo code?
+                    </button>
+                  ) : (
+                    <>
+                      <label className="form-label fw-semibold mb-1">Promo code</label>
+                      <div className="input-group">
+                        <input
+                          className="form-control"
+                          value={promo}
+                          onChange={(e) => { setPromo(e.target.value.toUpperCase()); setPromoErr(""); }}
+                          placeholder="e.g. WLELO3M"
+                          autoCapitalize="characters"
+                          disabled={promoBusy}
+                        />
+                        <button className="btn btn-outline-primary" onClick={applyPromo} disabled={promoBusy || !promo.trim()}>
+                          {promoBusy ? "Checking…" : "Apply"}
+                        </button>
+                      </div>
+                      {promoErr && <div className="text-danger small mt-1">{promoErr}</div>}
+                    </>
+                  )}
+                </div>
+              )}
+
               <label className="form-label fw-semibold mb-1">UPI Transaction / Reference ID <span className="text-muted fw-normal">(optional)</span></label>
               <input className="form-control mb-3" placeholder="e.g. 4012 3456 7890" value={ref} onChange={(e) => setRef(e.target.value)} />
 
               <button className="btn btn-success w-100 btn-lg" onClick={confirmPaid} disabled={busy}>
-                {busy ? "Submitting…" : "I've paid — Submit for verification"}
+                {busy ? "Submitting…" : `I've paid ₹${effectiveAmount} — Submit for verification`}
               </button>
               <p className="text-muted small mt-2 mb-0">After paying, enter your UPI reference and submit. An admin will verify it and unlock your editor.</p>
             </div>

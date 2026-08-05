@@ -86,6 +86,10 @@ class Payment(Base):
     reference = Column(String, default="")          # UPI transaction / UTR id
     status = Column(String, default="pending")       # pending | approved | rejected
     reason = Column(Text, default="")                # admin's reason when rejected
+    # Promo code redeemed on this payment (e.g. WLELO3M for 3-month Starter at
+    # ₹1). Empty for regular full-price payments. When admin approves a payment
+    # with a promo, the promo's plan+months override PAID_SUBSCRIPTION_DAYS.
+    promo_code = Column(String, default="")
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User")

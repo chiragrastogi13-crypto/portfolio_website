@@ -10,8 +10,6 @@ export default function Register() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [promo, setPromo] = useState("");
-  const [showPromo, setShowPromo] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -20,10 +18,7 @@ export default function Register() {
     setError("");
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     setBusy(true);
-    try {
-      await register(email, password, promo.trim());
-      navigate(promo.trim() ? "/editor" : from, { replace: true });
-    }
+    try { await register(email, password); navigate(from, { replace: true }); }
     catch (err) { setError(err.message); }
     finally { setBusy(false); }
   };
@@ -44,30 +39,6 @@ export default function Register() {
               <label className="form-label">Password</label>
               <input type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required />
               <div className="form-text">At least 6 characters.</div>
-            </div>
-            <div className="mb-3">
-              {!showPromo ? (
-                <button
-                  type="button"
-                  className="btn btn-link p-0 small text-decoration-none"
-                  onClick={() => setShowPromo(true)}
-                >
-                  Have a promo code?
-                </button>
-              ) : (
-                <>
-                  <label className="form-label">Promo code <span className="text-muted fw-normal">(optional)</span></label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={promo}
-                    onChange={(e) => setPromo(e.target.value.toUpperCase())}
-                    placeholder="e.g. WLELO3M"
-                    autoCapitalize="characters"
-                  />
-                  <div className="form-text">Unlocks your plan instantly if the code is valid.</div>
-                </>
-              )}
             </div>
             <button className="btn btn-primary w-100" disabled={busy}>{busy ? "Creating…" : "Create account"}</button>
           </form>

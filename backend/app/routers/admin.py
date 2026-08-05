@@ -8,7 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
-from ..config import PAID_SUBSCRIPTION_DAYS, portfolio_url
+from ..config import PAID_SUBSCRIPTION_DAYS, lookup_promo, portfolio_url
 from ..database import get_db
 from ..mailer import send_email
 
@@ -155,9 +155,16 @@ def approve_payment(
         # doesn't lose remaining days); otherwise start fresh from today.
         current_exp = payment.user.subscription_expires_at
         base = current_exp if (current_exp and current_exp > now) else now
-        payment.user.subscription_expires_at = base + timedelta(days=PAID_SUBSCRIPTION_DAYS)
-        # Record the purchased plan — decides template count + public URL shape.
-        payment.user.plan = payment.plan or payment.user.plan
+
+        promo = lookup_promo(payment.promo_code) if payment.promo_code else None
+        if promo:
+            promo_plan, months = promo
+            payment.user.subscription_expires_at = base + timedelta(days=30 * months)
+            payment.user.plan = promo_plan
+            payment.user.promo_code_used = payment.promo_code
+        else:
+            payment.user.subscription_expires_at = base + timedelta(days=PAID_SUBSCRIPTION_DAYS)
+            payment.user.plan = payment.plan or payment.user.plan
         background_tasks.add_task(
             send_email,
             payment.user.email,

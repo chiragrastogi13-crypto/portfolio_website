@@ -56,6 +56,11 @@ def _ensure_schema():
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE users ADD COLUMN promo_code_used VARCHAR DEFAULT ''"))
 
+    payment_cols = {c["name"] for c in insp.get_columns("payments")}
+    if "promo_code" not in payment_cols:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE payments ADD COLUMN promo_code VARCHAR DEFAULT ''"))
+
     # portfolios.url_kind — the URL namespace ('path' | 'subdomain'). Usernames
     # are unique per-namespace, so the old global-unique index on username is
     # replaced by a composite (username, url_kind) unique index.
