@@ -89,6 +89,7 @@ export const api = {
   blockUser: (id) => request(`/api/admin/users/${id}/block`, { method: "POST" }),
   unblockUser: (id) => request(`/api/admin/users/${id}/unblock`, { method: "POST" }),
   deleteUserPortfolio: (id) => request(`/api/admin/users/${id}/portfolio`, { method: "DELETE" }),
+  deleteUser: (id) => request(`/api/admin/users/${id}`, { method: "DELETE" }),
   adminPayments: () => request("/api/admin/payments"),
   approvePayment: (id) => request(`/api/admin/payments/${id}/approve`, { method: "POST" }),
   rejectPayment: (id, reason) => request(`/api/admin/payments/${id}/reject`, { method: "POST", body: { reason } }),

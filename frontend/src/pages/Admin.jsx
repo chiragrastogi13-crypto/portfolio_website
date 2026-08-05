@@ -77,6 +77,17 @@ function UsersTab({ onChange }) {
     } catch (e) { setError(e.message); } finally { setBusyId(null); }
   };
 
+  const delUser = async (u) => {
+    const msg = `${u.email} will be permanently deleted, along with their portfolio, payments, posted requirements, and applications. This cannot be undone.`;
+    if (!(await dialog.confirm({ title: "Delete this user?", message: msg, confirmText: "Delete user", danger: true }))) return;
+    setBusyId(u.id); setError("");
+    try {
+      await api.deleteUser(u.id);
+      setUsers((list) => list.filter((x) => x.id !== u.id));
+      onChange?.();
+    } catch (e) { setError(e.message); } finally { setBusyId(null); }
+  };
+
   return (
     <div className="card border-0 shadow-sm">
       <div className="card-body d-flex justify-content-between align-items-center">
@@ -124,6 +135,11 @@ function UsersTab({ onChange }) {
                           blocked
                             ? <button className="btn btn-outline-success" disabled={busyId === u.id} onClick={() => toggleBlock(u)}>Unblock</button>
                             : <button className="btn btn-outline-danger" disabled={busyId === u.id} onClick={() => toggleBlock(u)}>Block</button>
+                        )}
+                        {!u.is_admin && (
+                          <button className="btn btn-danger" disabled={busyId === u.id} title="Delete user permanently" onClick={() => delUser(u)}>
+                            <i className="fas fa-user-xmark"></i>
+                          </button>
                         )}
                       </div>
                     </td>

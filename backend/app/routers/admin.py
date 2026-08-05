@@ -114,6 +114,35 @@ def delete_user_portfolio(
     return None
 
 
+@router.delete("/users/{user_id}", status_code=204)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(auth.get_current_admin),
+):
+    """Permanently delete a user and every row that references them: portfolio,
+    payments, posted requirements (cascades their applications), and any
+    applications the user submitted to other people's requirements.
+    """
+    u = _get_user(db, user_id)
+    if u.is_admin:
+        raise HTTPException(status_code=400, detail="Cannot delete an admin account")
+    if u.id == admin.id:
+        raise HTTPException(status_code=400, detail="You cannot delete your own account")
+
+    db.query(models.Application).filter(models.Application.applicant_id == u.id).delete(
+        synchronize_session=False
+    )
+    for req in db.query(models.Requirement).filter(models.Requirement.poster_id == u.id).all():
+        db.delete(req)
+    db.query(models.Payment).filter(models.Payment.user_id == u.id).delete(
+        synchronize_session=False
+    )
+    db.delete(u)
+    db.commit()
+    return None
+
+
 def _out(p: models.Payment) -> schemas.AdminPaymentOut:
     return schemas.AdminPaymentOut(
         id=p.id,
