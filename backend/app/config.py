@@ -184,6 +184,11 @@ def public_portfolio_url(username: str, plan: str | None = None) -> str:
 NOTRACK_COOKIE_NAME = "wl_notrack"
 
 
+TRACK_SKIP_IPS: frozenset[str] = frozenset(
+    ip.strip() for ip in os.getenv("TRACK_SKIP_IPS", "").split(",") if ip.strip()
+)
+
+
 def notrack_cookie_domain() -> str | None:
     """Cookie Domain attribute for the admin's 'don't track me' cookie.
 

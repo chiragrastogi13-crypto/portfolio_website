@@ -19,7 +19,7 @@ from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
 from . import models
-from .config import ADMIN_EMAIL, ADMIN_PASSWORD, BASE_HOST, BASE_PORT, FRONTEND_ORIGINS, FRONTEND_URL, NOTRACK_COOKIE_NAME, UPLOADS_DIR
+from .config import ADMIN_EMAIL, ADMIN_PASSWORD, BASE_HOST, BASE_PORT, FRONTEND_ORIGINS, FRONTEND_URL, NOTRACK_COOKIE_NAME, TRACK_SKIP_IPS, UPLOADS_DIR
 from .database import Base, SessionLocal, engine
 from .seed_samples import ensure_samples
 from .routers import admin as admin_router
@@ -293,6 +293,10 @@ def _record_visit(request: Request, subdomain: str | None = None) -> None:
         return
 
     ip = _client_ip(request)
+    # Second opt-out layer: static IPs listed in TRACK_SKIP_IPS env var. Covers
+    # devices without the cookie (fresh browsers, curl, cookie cleared).
+    if ip in TRACK_SKIP_IPS:
+        return
     db = SessionLocal()
     try:
         cutoff = datetime.utcnow() - _DEDUP_WINDOW
