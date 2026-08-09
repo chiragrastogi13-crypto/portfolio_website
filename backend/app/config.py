@@ -179,3 +179,21 @@ def portfolio_url(username: str, url_kind: str) -> str:
 def public_portfolio_url(username: str, plan: str | None = None) -> str:
     """Public URL for a username given the owner's plan (URL shape from plan)."""
     return portfolio_url(username, plan_url_kind(plan))
+
+
+NOTRACK_COOKIE_NAME = "wl_notrack"
+
+
+def notrack_cookie_domain() -> str | None:
+    """Cookie Domain attribute for the admin's 'don't track me' cookie.
+
+    Returned as ".wlelo.com" in prod so the cookie is sent on subdomain
+    portfolios too. None for localhost/pure-IP hosts (browsers reject a Domain
+    attribute on those, silently discarding the cookie).
+    """
+    host = BASE_HOST
+    if host == "localhost" or "." not in host:
+        return None
+    if all(part.isdigit() for part in host.split(".")):
+        return None
+    return f".{host}"

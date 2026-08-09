@@ -19,7 +19,7 @@ from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
 from . import models
-from .config import ADMIN_EMAIL, ADMIN_PASSWORD, BASE_HOST, BASE_PORT, FRONTEND_ORIGINS, FRONTEND_URL, UPLOADS_DIR
+from .config import ADMIN_EMAIL, ADMIN_PASSWORD, BASE_HOST, BASE_PORT, FRONTEND_ORIGINS, FRONTEND_URL, NOTRACK_COOKIE_NAME, UPLOADS_DIR
 from .database import Base, SessionLocal, engine
 from .seed_samples import ensure_samples
 from .routers import admin as admin_router
@@ -286,6 +286,10 @@ def _record_visit(request: Request, subdomain: str | None = None) -> None:
     if request.method == "OPTIONS":
         return
     if path in _SKIP_EXACT or any(path.startswith(p) for p in _SKIP_PREFIXES):
+        return
+    # Admin opts themselves out by logging in once (login route sets this
+    # cookie). Domain=.wlelo.com so it applies to portfolio subdomains too.
+    if request.cookies.get(NOTRACK_COOKIE_NAME) == "1":
         return
 
     ip = _client_ip(request)
