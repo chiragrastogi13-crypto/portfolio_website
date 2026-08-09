@@ -4,7 +4,8 @@ All routes require an admin account (see config.ADMIN_EMAIL).
 """
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
@@ -52,12 +53,25 @@ def stats(
     admin: models.User = Depends(auth.get_current_admin),
 ):
     """Dashboard counts for the admin panel."""
+    day_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    visits_today = (
+        db.query(models.Visitor).filter(models.Visitor.visited_at >= day_start).count()
+    )
+    unique_today = (
+        db.query(func.count(func.distinct(models.Visitor.ip_address)))
+        .filter(models.Visitor.visited_at >= day_start)
+        .scalar()
+        or 0
+    )
     return schemas.AdminStats(
         users=db.query(models.User).count(),
         portfolios=db.query(models.Portfolio).count(),
         published=db.query(models.Portfolio).filter(models.Portfolio.is_published == True).count(),
         subscribers=db.query(models.User).filter(models.User.is_subscribed == True).count(),
         pending_payments=db.query(models.Payment).filter(models.Payment.status == "pending").count(),
+        visits_today=visits_today,
+        visits_total=db.query(models.Visitor).count(),
+        unique_visitors_today=unique_today,
     )
 
 
@@ -205,6 +219,46 @@ def approve_payment(
     db.commit()
     db.refresh(payment)
     return _out(payment)
+
+
+def _visitor_out(v: models.Visitor) -> schemas.AdminVisitorOut:
+    return schemas.AdminVisitorOut(
+        id=v.id,
+        ip_address=v.ip_address or "",
+        path=v.path or "/",
+        method=v.method or "GET",
+        host=v.host or "",
+        user_agent=v.user_agent or "",
+        referer=v.referer or "",
+        visited_at=v.visited_at,
+    )
+
+
+@router.get("/visitors", response_model=list[schemas.AdminVisitorOut])
+def list_visitors(
+    limit: int = Query(default=200, ge=1, le=1000),
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(auth.get_current_admin),
+):
+    """Recent site visits (newest first). Capped so the payload stays small."""
+    rows = (
+        db.query(models.Visitor)
+        .order_by(models.Visitor.visited_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return [_visitor_out(v) for v in rows]
+
+
+@router.delete("/visitors", status_code=204)
+def clear_visitors(
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(auth.get_current_admin),
+):
+    """Wipe the visitor log (useful before a launch to reset counters)."""
+    db.query(models.Visitor).delete(synchronize_session=False)
+    db.commit()
+    return None
 
 
 @router.post("/payments/{payment_id}/reject", response_model=schemas.AdminPaymentOut)

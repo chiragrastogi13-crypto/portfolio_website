@@ -19,6 +19,8 @@ function StatsBar({ refreshKey }) {
     { label: "Published portfolios", value: s?.published, icon: "fa-globe", color: "#00b894" },
     { label: "Subscribers", value: s?.subscribers, icon: "fa-star", color: "#fdcb6e" },
     { label: "Pending payments", value: s?.pending_payments, icon: "fa-clock", color: "#e17055" },
+    { label: "Visits today", value: s?.visits_today, icon: "fa-eye", color: "#0984e3" },
+    { label: "Unique today", value: s?.unique_visitors_today, icon: "fa-user-clock", color: "#00cec9" },
   ];
   return (
     <div className="row g-3 mb-4">
@@ -242,8 +244,112 @@ function PaymentsTab({ onChange }) {
   );
 }
 
+function VisitorsTab({ onChange }) {
+  const [visits, setVisits] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [q, setQ] = useState("");
+  const [clearing, setClearing] = useState(false);
+  const dialog = useDialog();
+
+  const load = useCallback(() => {
+    setLoading(true);
+    api.adminVisitors(500).then(setVisits).catch((e) => setError(e.message)).finally(() => setLoading(false));
+  }, []);
+  useEffect(load, [load]);
+
+  const clearAll = async () => {
+    if (!(await dialog.confirm({ title: "Clear all visitor logs?", message: "Every recorded visit will be permanently deleted. This cannot be undone.", confirmText: "Clear logs", danger: true }))) return;
+    setClearing(true); setError("");
+    try {
+      await api.clearVisitors();
+      setVisits([]);
+      onChange?.();
+    } catch (e) { setError(e.message); } finally { setClearing(false); }
+  };
+
+  const needle = q.trim().toLowerCase();
+  const shown = needle
+    ? visits.filter((v) => (v.ip_address + " " + v.path + " " + v.host + " " + v.user_agent).toLowerCase().includes(needle))
+    : visits;
+
+  const shortUA = (ua) => {
+    if (!ua) return "—";
+    const m = ua.match(/(Chrome|Firefox|Safari|Edge|OPR|SamsungBrowser|MSIE|Trident)[/ ]?([\d.]+)?/i);
+    const os = /Windows/i.test(ua) ? "Windows" : /Android/i.test(ua) ? "Android" : /iPhone|iPad|iOS/i.test(ua) ? "iOS" : /Mac OS X/i.test(ua) ? "macOS" : /Linux/i.test(ua) ? "Linux" : "";
+    const browser = m ? `${m[1]}${m[2] ? " " + m[2].split(".")[0] : ""}` : "Unknown";
+    return os ? `${browser} · ${os}` : browser;
+  };
+
+  return (
+    <div className="card border-0 shadow-sm">
+      <div className="card-body d-flex flex-wrap gap-2 justify-content-between align-items-center">
+        <div><strong>{shown.length}</strong> visit{shown.length === 1 ? "" : "s"}{needle && ` (filtered from ${visits.length})`}</div>
+        <div className="d-flex gap-2 flex-wrap">
+          <input
+            className="form-control form-control-sm"
+            style={{ maxWidth: 240 }}
+            placeholder="Search IP, path, browser…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <button className="btn btn-outline-primary btn-sm" onClick={load} disabled={loading}>
+            <i className="fas fa-rotate me-1"></i>Refresh
+          </button>
+          <button className="btn btn-outline-danger btn-sm" onClick={clearAll} disabled={clearing || visits.length === 0}>
+            <i className="fas fa-trash me-1"></i>Clear logs
+          </button>
+        </div>
+      </div>
+      {error && <div className="alert alert-danger m-3">{error}</div>}
+      {loading ? (
+        <div className="text-center py-5">Loading visitors…</div>
+      ) : (
+        <div className="table-responsive">
+          <table className="table table-hover align-middle mb-0">
+            <thead className="table-light">
+              <tr>
+                <th>#</th>
+                <th>Date &amp; time</th>
+                <th>IP address</th>
+                <th>Page visited</th>
+                <th>Portfolio</th>
+                <th>Browser / OS</th>
+                <th>Referrer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.length === 0 && (
+                <tr><td colSpan="7" className="text-center text-muted py-4">
+                  {visits.length === 0 ? "No visitors yet." : "Nothing matches that search."}
+                </td></tr>
+              )}
+              {shown.map((v) => (
+                <tr key={v.id}>
+                  <td className="text-muted">{v.id}</td>
+                  <td className="small">{new Date(v.visited_at).toLocaleString()}</td>
+                  <td><code>{v.ip_address || "—"}</code></td>
+                  <td>
+                    <span className="badge text-bg-light me-1">{v.method}</span>
+                    <span className="small">{v.path}</span>
+                  </td>
+                  <td>{v.host ? <span className="badge text-bg-info">{v.host}</span> : <span className="text-muted small">main site</span>}</td>
+                  <td className="small" title={v.user_agent}>{shortUA(v.user_agent)}</td>
+                  <td className="small text-muted" style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={v.referer}>
+                    {v.referer || "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Admin() {
-  const [tab, setTab] = useState("users");
+  const [tab, setTab] = useState("visitors");
   const [statsKey, setStatsKey] = useState(0);
   const refreshStats = () => setStatsKey((k) => k + 1);
 
@@ -251,12 +357,17 @@ export default function Admin() {
     <main className="container py-5">
       <div className="mb-4">
         <h2 className="fw-bold mb-1"><i className="fas fa-user-shield text-primary me-2"></i>Admin Panel</h2>
-        <p className="text-muted mb-0">Manage users and review payments.</p>
+        <p className="text-muted mb-0">Track visitors, manage users and review payments.</p>
       </div>
 
       <StatsBar refreshKey={statsKey} />
 
       <ul className="nav nav-pills mb-4 gap-2">
+        <li className="nav-item">
+          <button className={`nav-link ${tab === "visitors" ? "active" : ""}`} onClick={() => setTab("visitors")}>
+            <i className="fas fa-chart-line me-1"></i>Visitors
+          </button>
+        </li>
         <li className="nav-item">
           <button className={`nav-link ${tab === "users" ? "active" : ""}`} onClick={() => setTab("users")}>
             <i className="fas fa-users me-1"></i>Users
@@ -269,7 +380,9 @@ export default function Admin() {
         </li>
       </ul>
 
-      {tab === "users" ? <UsersTab onChange={refreshStats} /> : <PaymentsTab onChange={refreshStats} />}
+      {tab === "visitors" && <VisitorsTab onChange={refreshStats} />}
+      {tab === "users" && <UsersTab onChange={refreshStats} />}
+      {tab === "payments" && <PaymentsTab onChange={refreshStats} />}
     </main>
   );
 }

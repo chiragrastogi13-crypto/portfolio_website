@@ -93,6 +93,8 @@ export const api = {
   adminPayments: () => request("/api/admin/payments"),
   approvePayment: (id) => request(`/api/admin/payments/${id}/approve`, { method: "POST" }),
   rejectPayment: (id, reason) => request(`/api/admin/payments/${id}/reject`, { method: "POST", body: { reason } }),
+  adminVisitors: (limit = 200) => request(`/api/admin/visitors?limit=${limit}`),
+  clearVisitors: () => request("/api/admin/visitors", { method: "DELETE" }),
   // hiring board — requirements + applications
   requirements: () => request("/api/requirements", { auth: false }),
   myRequirements: () => request("/api/requirements?mine=true"),

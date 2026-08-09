@@ -83,6 +83,20 @@ class AdminStats(BaseModel):
     published: int
     subscribers: int
     pending_payments: int
+    visits_today: int = 0
+    visits_total: int = 0
+    unique_visitors_today: int = 0
+
+
+class AdminVisitorOut(BaseModel):
+    id: int
+    ip_address: str
+    path: str
+    method: str = "GET"
+    host: str = ""
+    user_agent: str = ""
+    referer: str = ""
+    visited_at: datetime
 
 
 # --- Payments ---------------------------------------------------------------

@@ -150,3 +150,25 @@ class SamplePortfolio(Base):
     skills_json = Column(Text, default="[]")
     # Full blogger-style data for the live sample preview.
     data_json = Column(Text, default="{}")
+
+
+class Visitor(Base):
+    """Every page view / meaningful hit on the site.
+
+    Written from the HTTP middleware (see main.py). Deduped per (ip, path)
+    within a short window so the React app pinging the API doesn't flood the
+    table. Admin panel reads this to show "who visited, when, from where".
+    """
+
+    __tablename__ = "visitors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ip_address = Column(String, index=True, default="")
+    path = Column(String, default="/")
+    method = Column(String, default="GET")
+    user_agent = Column(String, default="")
+    referer = Column(String, default="")
+    # Portfolio subdomain the visitor landed on (e.g. "alex"), or "" for the
+    # main site / API. Makes it obvious which user's page pulled the traffic.
+    host = Column(String, default="")
+    visited_at = Column(DateTime, default=datetime.utcnow, index=True)

@@ -9,6 +9,7 @@ Serves two things on the same port (8000):
 Subdomain detection is done in a middleware that inspects the Host header.
 """
 import json
+from datetime import datetime, timedelta
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -254,7 +255,79 @@ async def subdomain_router(request: Request, call_next):
     # /static/blogger.css, /api/*) passes through so assets load normally.
     sub = _extract_subdomain(request.headers.get("host", ""))
     if sub and request.url.path == "/":
+        _record_visit(request, sub)
         return _render_portfolio(request, sub, "subdomain")
+    return await call_next(request)
+
+
+# Paths we never want to log — noisy, non-human, or admin-panel internals.
+_SKIP_PREFIXES = ("/static/", "/uploads/", "/api/admin/", "/favicon", "/assets/")
+_SKIP_EXACT = {"/api/health", "/docs", "/redoc", "/openapi.json"}
+# Within this window, a repeat (ip, path) hit is treated as the same visit
+# (prevents the React app's polling from flooding the table).
+_DEDUP_WINDOW = timedelta(minutes=5)
+
+
+def _client_ip(request: Request) -> str:
+    """Real client IP even behind a reverse proxy (Render, Netlify, nginx)."""
+    fwd = request.headers.get("x-forwarded-for", "")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    real = request.headers.get("x-real-ip", "")
+    if real:
+        return real.strip()
+    return request.client.host if request.client else ""
+
+
+def _record_visit(request: Request, subdomain: str | None = None) -> None:
+    """Log a page/API hit for the admin visitor dashboard. Best-effort — never
+    blocks or crashes the actual request."""
+    path = request.url.path
+    if request.method == "OPTIONS":
+        return
+    if path in _SKIP_EXACT or any(path.startswith(p) for p in _SKIP_PREFIXES):
+        return
+
+    ip = _client_ip(request)
+    db = SessionLocal()
+    try:
+        cutoff = datetime.utcnow() - _DEDUP_WINDOW
+        recent = (
+            db.query(models.Visitor)
+            .filter(
+                models.Visitor.ip_address == ip,
+                models.Visitor.path == path,
+                models.Visitor.visited_at >= cutoff,
+            )
+            .first()
+        )
+        if recent:
+            return
+        db.add(models.Visitor(
+            ip_address=ip,
+            path=path,
+            method=request.method,
+            user_agent=(request.headers.get("user-agent", "") or "")[:500],
+            referer=(request.headers.get("referer", "") or "")[:500],
+            host=subdomain or "",
+        ))
+        db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
+
+
+@app.middleware("http")
+async def visitor_tracker(request: Request, call_next):
+    """Log every meaningful hit before it reaches the route handlers.
+
+    Runs AFTER subdomain_router (FastAPI executes middleware in reverse-added
+    order), so subdomain-root requests are already recorded by that handler
+    with the resolved subdomain and this one becomes a no-op for them.
+    """
+    if request.url.path != "/" or not _extract_subdomain(request.headers.get("host", "")):
+        _record_visit(request)
     return await call_next(request)
 
 
