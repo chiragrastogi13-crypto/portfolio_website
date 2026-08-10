@@ -30,15 +30,17 @@
 }
 .theme-noir,
 .theme-noir p,
-.theme-noir span,
 .theme-noir li,
-.theme-noir a,
 .theme-noir h1, .theme-noir h2, .theme-noir h3, .theme-noir h4, .theme-noir h5, .theme-noir h6,
 .theme-noir .text-muted,
 .theme-noir .head p,
 .theme-noir .contact-info-card span,
 .theme-noir .testimonial-card .t-text,
 .theme-noir .testimonial-card .t-meta small { color: #ffffff !important; }
+.theme-noir a:not(.btn):not(.own-it-btn),
+.theme-noir span:not(.own-it-btn span):not(.sample-ribbon .own-it-btn span) { color: #ffffff !important; }
+.theme-noir .btn-light,
+.theme-noir .sample-ribbon .own-it-btn { color: #5546d6 !important; }
 .theme-noir .contact-form .form-control { background: #17171b; color: #ffffff; border-color: rgba(255,255,255,0.25); }
 .theme-noir .contact-form .form-control::placeholder,
 .theme-noir input::placeholder,
